@@ -159,18 +159,67 @@ dialog {
   border: none; border-radius: 12px; padding: 0; width: min(640px, calc(100% - 32px));
   background: var(--card); color: var(--text); box-shadow: 0 10px 40px rgb(0 0 0 / .3);
 }
-dialog::backdrop { background: rgb(0 0 0 / .4); }
-.detail { padding: 18px; display: grid; gap: 12px; }
-.detail h3 { margin: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.detail .nazev-in { font-size: 18px; font-weight: 600; }
-.detail .radek { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
-.detail label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
-.detail textarea { min-height: 90px; resize: vertical; }
-.detail .paticka {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
-  font-size: 12px; color: var(--muted);
+dialog::backdrop { background: rgb(0 0 0 / .45); }
+#detail { width: min(1040px, calc(100% - 32px)); max-height: calc(100vh - 32px); overflow: hidden; }
+/* Varianta B: obsah vlevo (název a popis stejně široké), nastavení v panelu vpravo. */
+.detail {
+  display: grid; grid-template-columns: minmax(0, 1fr) 290px; max-height: calc(100vh - 32px); overflow-y: auto;
 }
+.detail .levy { padding: 22px 26px; display: grid; gap: 18px; align-content: start; }
+.detail .bok {
+  background: var(--panel); border-left: 1px solid var(--line); padding: 22px 20px;
+  display: grid; gap: 16px; align-content: start;
+}
+.detail .id-radek { font-size: 13px; color: var(--muted); font-weight: 600; }
+.detail .pole { display: grid; gap: 7px; }
+.detail .popisek { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.detail textarea, .detail input:not([type=radio]) { background: var(--bg); border: 1px solid var(--line); }
+.detail .nazev-in {
+  font-size: 22px; font-weight: 650; line-height: 1.3; resize: none; overflow: hidden;
+  padding: 8px 10px; border-color: transparent; background: none;
+}
+.detail .nazev-in:hover { border-color: var(--line); }
+.detail .nazev-in:focus { background: var(--bg); }
+.detail .popis-in, .detail .reseni-in {
+  font-size: 15px; line-height: 1.7; padding: 12px 14px; border-radius: 10px; resize: none; overflow: hidden;
+}
+.detail .popis-in { min-height: 300px; }
+.detail .reseni-in { min-height: 90px; }
+.detail .info { font-size: 13px; color: var(--muted); display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 14px; }
+.detail .info b { color: var(--text); font-weight: 600; }
+.detail .akce { display: flex; gap: 8px; justify-content: space-between; }
 .detail .ulozeno { color: var(--ok); }
+
+/* Přepínače (stav, priorita, typ, řeší) */
+.seg { display: flex; flex-wrap: wrap; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+.seg-v { flex: 1 1 auto; position: relative; display: block; }
+.seg-v input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; width: 100%; }
+.seg-v span {
+  display: block; text-align: center; padding: 7px 8px; border-radius: 7px; font-size: 13px;
+  color: var(--muted); white-space: nowrap; pointer-events: none;
+}
+.seg-v:hover span { color: var(--text); }
+.seg-v input:checked + span { background: var(--card); color: var(--text); font-weight: 700; box-shadow: var(--shadow); }
+.seg-v input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg-v.s-nahlaseno input:checked + span { background: color-mix(in srgb, var(--accent) 28%, var(--card)); }
+.seg-v.s-resi_se input:checked + span { background: color-mix(in srgb, var(--p2) 28%, var(--card)); }
+.seg-v.s-vyreseno input:checked + span { background: color-mix(in srgb, var(--ok) 26%, var(--card)); }
+.seg-v.p-1 input:checked + span { background: color-mix(in srgb, var(--p1) 28%, var(--card)); }
+.seg-v.p-2 input:checked + span { background: color-mix(in srgb, var(--p2) 28%, var(--card)); }
+.seg-v.p-3 input:checked + span { background: color-mix(in srgb, var(--p3) 35%, var(--card)); }
+
+/* Mobil: jeden sloupec jako varianta A — název, nastavení, pak popis. */
+@media (max-width: 800px) {
+  #detail { width: calc(100% - 16px); max-height: calc(100vh - 16px); }
+  .detail { display: flex; flex-direction: column; gap: 14px; padding: 16px; max-height: calc(100vh - 16px); }
+  .detail .levy, .detail .bok { display: contents; }
+  .detail .levy > *, .detail .bok > * { flex-shrink: 0; }  /* jinak flexbox smrskne název */
+  .detail .m-hl { order: 1; } .detail .m-nazev { order: 2; } .detail .m-ovl { order: 3; }
+  .detail .m-popis { order: 4; } .detail .m-res { order: 5; } .detail .m-obr { order: 6; }
+  .detail .m-info { order: 7; } .detail .m-akce { order: 8; }
+  .detail .nazev-in { font-size: 19px; padding: 6px 8px; }
+  .detail .popis-in { min-height: 200px; }
+}
 .obrazky { display: flex; flex-wrap: wrap; gap: 8px; }
 .obrazek { position: relative; }
 .obrazek img {
@@ -188,6 +237,49 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
 }
 #nahled { width: auto; max-width: 95vw; background: none; box-shadow: none; }
 #nahled img { max-width: 95vw; max-height: 90vh; display: block; border-radius: 8px; }
+
+/* ── Oznámení a nastavení ───────────────────────────────── */
+.ikona-btn {
+  position: relative; border: 1px solid var(--line); background: var(--card); border-radius: 8px;
+  width: 36px; height: 36px; font-size: 17px; line-height: 1; padding: 0;
+}
+.ikona-btn:hover { border-color: var(--muted); }
+.odznak {
+  position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 99px; background: var(--p1); color: #fff; font-size: 11px; font-weight: 700;
+  display: grid; place-items: center;
+}
+#oznameni { width: min(460px, calc(100% - 32px)); }
+.panel { padding: 16px 18px; display: grid; gap: 12px; }
+.panel h3 { margin: 0; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+.udalosti { display: grid; gap: 2px; max-height: 70vh; overflow-y: auto; margin: 0 -8px; }
+.udalost {
+  display: grid; grid-template-columns: 26px 1fr; gap: 2px 8px; padding: 8px; border-radius: 8px;
+  cursor: pointer; text-align: left; border: none; background: none; width: 100%;
+}
+.udalost:hover { background: var(--bg); }
+.udalost.nova { background: var(--accent-soft); }
+.udalost .ik { font-size: 17px; grid-row: span 2; }
+.udalost .co { font-weight: 600; word-break: break-word; }
+.udalost .kdy { font-size: 12px; color: var(--muted); }
+.udalost.pryc .co { text-decoration: line-through; color: var(--muted); }
+#nastaveni { width: min(560px, calc(100% - 32px)); }
+#nastaveni label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+#nastaveni label.chk { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--text); }
+#nastaveni label.chk input { width: auto; }
+#nastaveni .matice { width: 100%; border-collapse: collapse; font-size: 14px; box-shadow: none; background: none; display: table; }
+#nastaveni .matice thead { display: table-header-group; }
+#nastaveni .matice tbody { display: table-row-group; }
+#nastaveni .matice tr { display: table-row; background: none; box-shadow: none; border: none; padding: 0; margin: 0; cursor: default; }
+#nastaveni .matice th, #nastaveni .matice td {
+  display: table-cell; padding: 6px 8px; border-bottom: 1px solid var(--line); background: none; cursor: default;
+}
+#nastaveni .matice th { font-size: 12px; }
+#nastaveni .matice td:not(:first-child), #nastaveni .matice th:not(:first-child) { text-align: center; width: 80px; }
+#nastaveni .matice input { width: auto; }
+.tg-stav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--text); }
+.tg-stav .ok { color: var(--ok); font-weight: 600; }
+.poznamka { font-size: 12px; color: var(--muted); margin: 0; }
 
 @media (max-width: 800px) {
   main.kanban { grid-template-columns: minmax(0, 1fr); }
@@ -250,7 +342,9 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
     </div>
     <div class="ja">
       <span class="spojeni" title="Živé spojení"></span>
-      <b id="mojeJmeno" title="Změnit jméno"></b>
+      <button class="ikona-btn" id="zvonek" title="Oznámení">🔔<span class="odznak" hidden></span></button>
+      <button class="ikona-btn" id="ozubene" title="Nastavení">⚙</button>
+      <b id="mojeJmeno" title="Nastavení"></b>
       <button class="btn" id="odhlasit">Odhlásit</button>
     </div>
     <nav class="taby"></nav>
@@ -260,6 +354,11 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
 
 <dialog id="detail"><form class="detail"></form></dialog>
 <dialog id="nahled"><img alt=""></dialog>
+<dialog id="oznameni"><div class="panel">
+  <h3>🔔 Oznámení <button type="button" class="btn" data-zavrit>Zavřít</button></h3>
+  <div class="udalosti"></div>
+</div></dialog>
+<dialog id="nastaveni"><form class="panel"></form></dialog>
 
 <datalist id="projekty"></datalist>
 
@@ -293,6 +392,10 @@ const sb = supabase.createClient(BUGNIK.url, BUGNIK.anonKey);
 const $ = (s, el = document) => el.querySelector(s);
 
 let ja = null;                 // uuid přihlášeného
+let mujEmail = '';
+let ja_radek = null;           // můj řádek z `lide` (precteno_do, nastaveni)
+let udalosti = [];             // oznámení, nejnovější první
+const POCET_UDALOSTI = 100;
 const bugy = new Map();        // id → řádek
 const lide = new Map();        // id → jméno
 let vsechnyVyresene = false;
@@ -374,22 +477,27 @@ sb.auth.onAuthStateChange((_ev, session) => {
   const prihlasen = !!session;
   $('#login').hidden = prihlasen;
   $('#app').hidden = !prihlasen;
-  if (prihlasen && !spusteno) { spusteno = true; ja = session.user.id; start().catch(chyba); }
+  if (prihlasen && !spusteno) { spusteno = true; ja = session.user.id; mujEmail = session.user.email; start().catch(chyba); }
   if (!prihlasen && spusteno) location.reload();
 });
 
 // ── Start: načíst data a odebírat změny ───────────────────
 async function start() {
-  const [l, b] = await Promise.all([
-    dotaz(sb.from('lide').select('id, jmeno')),
+  const [l, b, u] = await Promise.all([
+    dotaz(sb.from('lide').select('id, jmeno, precteno_do, nastaveni')),
     dotaz(sb.from('bugs').select('*')),
+    dotaz(sb.from('udalosti').select('*').order('created_at', { ascending: false }).limit(POCET_UDALOSTI)),
   ]);
   l.forEach(r => lide.set(r.id, r.jmeno));
+  ja_radek = l.find(r => r.id === ja) || { precteno_do: new Date().toISOString(), nastaveni: {} };
   b.forEach(r => bugy.set(r.id, r));
+  udalosti = u;
   $('#mojeJmeno').textContent = jmeno(ja);
   obnovProjekty(nactiFiltry());
   tab = tabZOdkazu();
   vykresli();
+  obnovZvonek();
+  otevriZOdkazu();
 
   sb.channel('bugnik')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'bugs' }, zmena => {
@@ -407,8 +515,15 @@ async function start() {
       vykresli();
       if (cizi) blikni(r.id);
     })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'udalosti' }, zmena => {
+      novaUdalost(zmena.new);
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'lide' }, zmena => {
       if (zmena.new?.id) lide.set(zmena.new.id, zmena.new.jmeno);
+      if (zmena.new?.id === ja) {
+        ja_radek = zmena.new;
+        if ($('#nastaveni').open) vykresliTelegram(); // propojení Telegramu dokončí bot
+      }
       $('#mojeJmeno').textContent = jmeno(ja);
       vykresli();
     })
@@ -416,7 +531,7 @@ async function start() {
       $('.spojeni').classList.toggle('ok', stav === 'SUBSCRIBED');
       $('.spojeni').title = stav === 'SUBSCRIBED' ? 'Živé spojení — změny se propisují hned' : 'Spojení se navazuje…';
       // Po výpadku spojení (uspaný notebook) dotáhnout, co se mezitím změnilo.
-      if (stav === 'SUBSCRIBED' && bugy.size) prenacti();
+      if (stav === 'SUBSCRIBED' && bugy.size) { prenacti(); prenactiUdalosti(); }
     });
 }
 
@@ -460,7 +575,21 @@ function prepniTab(id) {
   vykresli();
   window.scrollTo(0, 0);
 }
-window.addEventListener('hashchange', () => { if (spusteno) { tab = tabZOdkazu(); vykresli(); } });
+window.addEventListener('hashchange', () => {
+  if (!spusteno || otevriZOdkazu()) return;
+  tab = tabZOdkazu();
+  vykresli();
+});
+// Odkaz #bug-12 (ze zprávy na Telegramu / v e-mailu) otevře rovnou detail.
+function otevriZOdkazu() {
+  const m = location.hash.match(/^#bug-(\d+)$/);
+  if (!m) return false;
+  history.replaceState(null, '', tab === 'prehled' ? location.pathname : '#' + tab);
+  const id = Number(m[1]);
+  if (bugy.has(id)) otevriDetail(id);
+  else alert(`Záznam #${id} už neexistuje.`);
+  return true;
+}
 
 function vykresliTaby() {
   const pocty = {};
@@ -736,8 +865,13 @@ dlg.addEventListener('click', ev => { if (ev.target === dlg) zavri(); });
 formular.addEventListener('submit', ev => { ev.preventDefault(); otevreny === 'novy' ? pridejKoncept() : dlg.close(); });
 formular.addEventListener('keydown', ev => {
   if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); formular.requestSubmit(); }
+  // Název je textarea kvůli zalamování, ale nový řádek v něm nechceme: Enter u nového = Přidat.
+  else if (ev.key === 'Enter' && ev.target.name === 'nazev') {
+    ev.preventDefault();
+    if (otevreny === 'novy') formular.requestSubmit();
+  }
   // Enter v jednořádkovém poli nemá odeslat formulář (zavřít okno) — jen u nového ano, to je „Přidat".
-  else if (ev.key === 'Enter' && ev.target.tagName === 'INPUT' && otevreny !== 'novy') ev.preventDefault();
+  else if (ev.key === 'Enter' && ev.target.tagName === 'INPUT' && ev.target.type !== 'radio' && otevreny !== 'novy') ev.preventDefault();
 });
 
 function zavri() {
@@ -751,6 +885,9 @@ function otevriDetail(id) {
   otevreny = id;
   vyplnDetail(bugy.get(id));
   dlg.showModal();
+  vyskaVsech();          // výška jde změřit až u zobrazeného okna
+  formular.scrollTop = 0;
+  document.activeElement?.blur();  // showModal dá fokus do názvu a ten by vypadal rozepsaně
 }
 
 function otevriNovy(soubory = []) {
@@ -761,6 +898,7 @@ function otevriNovy(soubory = []) {
   otevreny = 'novy';
   vyplnNovy();
   dlg.showModal();
+  vyskaVsech();
   formular.elements.nazev.focus();
   if (soubory.length) nahraj(soubory);
 }
@@ -781,39 +919,61 @@ async function pridejKoncept() {
   } catch (e) { tlacitko.disabled = false; chyba(e); }
 }
 
-function poleTypu(hodnota, onchange) {
-  return el('label', {}, 'Typ', el('select', { name: 'typ', onchange },
-    Object.entries(TYPY).map(([v, t]) => el('option', { value: v, text: t, selected: v === hodnota }))));
+// ── Ovládání okna: přepínače místo rozbalovacích nabídek ──
+// Přepínač = skupina radio tlačítek; f.elements[jmeno].value funguje stejně jako u <select>.
+function prepinac(jmenoPole, moznosti, hodnota, onchange) {
+  return el('div', { class: 'seg', role: 'radiogroup' }, moznosti.map(([v, text, trida]) =>
+    el('label', { class: 'seg-v' + (trida ? ' ' + trida : '') },
+      el('input', { type: 'radio', name: jmenoPole, value: v, checked: String(v) === String(hodnota ?? ''), onchange }),
+      el('span', { text }))));
 }
-function polePriority(hodnota, onchange) {
-  return el('label', {}, 'Priorita', el('select', { name: 'priorita', onchange },
-    Object.entries(PRIORITY).map(([v, t]) => el('option', { value: v, text: t, selected: Number(v) === hodnota }))));
+const pole = (popisek, ovladac, trida) => el('div', { class: 'pole' + (trida ? ' ' + trida : '') },
+  el('span', { class: 'popisek', text: popisek }), ovladac);
+
+const prepinacTypu = (h, on) => pole('Typ', prepinac('typ', [['bug', '🐞 Bug'], ['ukol', '📋 Úkol']], h, on), 'm-ovl');
+const prepinacPriority = (h, on) => pole('Priorita', prepinac('priorita',
+  [[1, '🔴 Vysoká', 'p-1'], [2, '🟠 Střední', 'p-2'], [3, '⚪ Nízká', 'p-3']], h, on), 'm-ovl');
+const prepinacStavu = (h, on) => pole('Stav', prepinac('stav',
+  SLOUPCE.map(s => [s.stav, s.nazev, 's-' + s.stav]), h, on), 'm-ovl');
+const poleProjektu = (h, on) => el('label', { class: 'pole m-ovl' }, el('span', { class: 'popisek', text: 'Projekt' }),
+  el('input', { name: 'projekt', list: 'projekty', value: h, oninput: on }));
+
+// Textová pole rostou s obsahem — dlouhý popis je vidět celý, bez posuvníku.
+function autoVyska(t) {
+  if (!t) return;
+  t.style.height = 'auto';
+  t.style.height = t.scrollHeight + 2 + 'px';
 }
-const poleObrazku = () => el('label', {}, 'Screenshoty — Ctrl+V, přetáhnout sem, nebo kliknout', el('div', { class: 'obrazky' }));
+const vyskaVsech = () => formular.querySelectorAll('textarea').forEach(autoVyska);
+formular.addEventListener('input', ev => { if (ev.target.tagName === 'TEXTAREA') autoVyska(ev.target); });
+
+const poleNazvu = (hodnota, on, placeholder) => el('textarea', {
+  class: 'nazev-in m-nazev', name: 'nazev', rows: 1, maxlength: 200, value: hodnota, placeholder, oninput: on });
+const polePopisu = (hodnota, on) => el('label', { class: 'pole m-popis' },
+  el('span', { class: 'popisek', text: 'Popis — co se stalo, jak to zopakovat' }),
+  el('textarea', { class: 'popis-in', name: 'popis', value: hodnota, oninput: on }));
+const poleObrazku = () => el('div', { class: 'pole m-obr' },
+  el('span', { class: 'popisek', text: 'Screenshoty — Ctrl+V, přetáhnout sem, nebo kliknout' }),
+  el('div', { class: 'obrazky' }));
 
 function vyplnNovy() {
   const k = koncept;
-  const nastav = pole => ev => { k[pole] = pole === 'priorita' ? Number(ev.target.value) : ev.target.value; };
+  const nastav = p => ev => { k[p] = p === 'priorita' ? Number(ev.target.value) : ev.target.value; };
   formular.replaceChildren(
-    el('h3', { text: 'Nový záznam' }),
-    el('input', { class: 'nazev-in', name: 'nazev', placeholder: 'Co se děje? (název)', maxlength: 200, oninput: nastav('nazev') }),
-    el('div', { class: 'radek' },
-      poleTypu(k.typ, nastav('typ')),
-      polePriority(k.priorita, nastav('priorita')),
-      el('label', {}, 'Projekt', el('input', { name: 'projekt', list: 'projekty', value: k.projekt, oninput: nastav('projekt') })),
-    ),
-    el('label', {}, 'Popis (co se stalo, jak to zopakovat)',
-      el('textarea', { name: 'popis', oninput: nastav('popis') })),
-    poleObrazku(),
-    el('div', { class: 'paticka' },
-      el('span', { text: 'Ctrl+Enter = přidat' }),
-      el('span', {},
-        el('button', { type: 'button', class: 'btn', text: 'Zrušit', onclick: zavri }), ' ',
-        el('button', { class: 'btn primary', text: 'Přidat' })),
-    ),
+    el('div', { class: 'levy' },
+      el('div', { class: 'id-radek m-hl', text: 'Nový záznam' }),
+      poleNazvu('', nastav('nazev'), 'Co se děje? (název)'),
+      polePopisu('', nastav('popis')),
+      poleObrazku()),
+    el('aside', { class: 'bok' },
+      prepinacTypu(k.typ, nastav('typ')),
+      prepinacPriority(k.priorita, nastav('priorita')),
+      poleProjektu(k.projekt, nastav('projekt')),
+      el('div', { class: 'info m-info', text: 'Zapíše se do Nahlášených. Ctrl+Enter = přidat.' }),
+      el('div', { class: 'akce m-akce' },
+        el('button', { type: 'button', class: 'btn', text: 'Zrušit', onclick: zavri }),
+        el('button', { class: 'btn primary', text: 'Přidat' }))),
   );
-  formular.elements.typ.value = k.typ;
-  formular.elements.priorita.value = k.priorita;
   vykresliObrazky(k.screenshoty);
 }
 
@@ -822,12 +982,14 @@ function vyplnDetail(b, zvenku = false) {
   // Ten druhý upravil bug, který mám otevřený: přepsat jen pole, ve kterých zrovna nepíšu.
   if (zvenku) {
     for (const k of ['typ', 'nazev', 'popis', 'reseni', 'projekt', 'priorita', 'stav', 'resi']) {
-      const pole = f.elements[k];
-      if (pole && pole !== document.activeElement) pole.value = b[k] ?? '';
+      const p = f.elements[k];
+      if (p && p !== document.activeElement) p.value = b[k] ?? '';
     }
     ukazReseni(b);
+    vyskaVsech();
     vykresliObrazky(b.screenshoty);
-    $('.kdy', f).textContent = popisKdy(b);
+    $('.kdy', f).replaceChildren(...popisKdy(b));
+    $('.id-radek', f).textContent = idRadek(b);
     return;
   }
   // Hodnota se bere hned při psaní (ne až po odpočtu) a každé pole má vlastní
@@ -835,60 +997,57 @@ function vyplnDetail(b, zvenku = false) {
   // nebo ji uložilo ke špatnému bugu.
   const casovace = {};
   const stavUlozeni = el('span', { class: 'ulozeno' });
-  const zmena = (pole, okamzite) => ev => {
+  const zmena = (p, okamzite) => ev => {
     let v = ev.target.value;
-    if (pole === 'priorita') v = Number(v);
-    if (pole === 'resi') v = v || null;
-    if (pole === 'stav') ukazReseni({ ...bugy.get(b.id), stav: v });
-    clearTimeout(casovace[pole]);
+    if (p === 'priorita') v = Number(v);
+    if (p === 'resi') v = v || null;
+    if (p === 'stav') ukazReseni({ ...bugy.get(b.id), stav: v });
+    clearTimeout(casovace[p]);
     stavUlozeni.textContent = '';
-    casovace[pole] = setTimeout(async () => {
-      if (pole === 'nazev' && !v.trim()) return;
+    casovace[p] = setTimeout(async () => {
+      if (p === 'nazev' && !v.trim()) return;
       try {
-        const zmeny = { [pole]: v };
-        if (pole === 'stav') {
+        const zmeny = { [p]: v };
+        if (p === 'stav') {
           zmeny.poradi = nahoru(v);
           if (v === 'resi_se' && !bugy.get(b.id).resi) zmeny.resi = ja;
         }
         const r = await uloz(b.id, zmeny);
-        if (otevreny === b.id && zmeny.resi) f.elements.resi.value = r.resi;
+        if (otevreny === b.id) {
+          if (zmeny.resi) f.elements.resi.value = r.resi;
+          $('.id-radek', f).textContent = idRadek(r);
+          $('.kdy', f).replaceChildren(...popisKdy(r));
+        }
         stavUlozeni.textContent = 'Uloženo ✓';
       } catch (e) { chyba(e); }
     }, okamzite ? 0 : 600);
   };
-  const lidiVolby = [el('option', { value: '', text: '— nikdo —' }),
-    ...[...lide].map(([id, j]) => el('option', { value: id, text: j }))];
 
   f.replaceChildren(
-    el('input', { class: 'nazev-in', name: 'nazev', value: b.nazev, maxlength: 200, oninput: zmena('nazev') }),
-    el('div', { class: 'radek' },
-      poleTypu(b.typ || 'bug', zmena('typ', true)),
-      el('label', {}, 'Stav', el('select', { name: 'stav', onchange: zmena('stav', true) },
-        SLOUPCE.map(s => el('option', { value: s.stav, text: s.nazev })))),
-      polePriority(b.priorita, zmena('priorita', true)),
-      el('label', {}, 'Projekt', el('input', { name: 'projekt', list: 'projekty', value: b.projekt, oninput: zmena('projekt') })),
-      el('label', {}, 'Řeší', el('select', { name: 'resi', onchange: zmena('resi', true) }, lidiVolby)),
-    ),
-    el('label', {}, 'Popis (co se stalo, jak to zopakovat)',
-      el('textarea', { name: 'popis', value: b.popis, oninput: zmena('popis') })),
-    el('label', { class: 'pole-reseni' }, 'Řešení (jak se to opravilo, commit)',
-      el('textarea', { name: 'reseni', value: b.reseni, oninput: zmena('reseni'), style: 'min-height:60px' })),
-    poleObrazku(),
-    el('div', { class: 'paticka' },
-      el('span', { class: 'kdy', text: popisKdy(b) }),
-      stavUlozeni,
-      el('span', {},
-        el('button', { type: 'button', class: 'btn danger', text: 'Smazat', onclick: () => smaz(b.id) }), ' ',
-        el('button', { class: 'btn primary', text: 'Hotovo' })),
-    ),
+    el('div', { class: 'levy' },
+      el('div', { class: 'id-radek m-hl', text: idRadek(b) }),
+      poleNazvu(b.nazev, zmena('nazev')),
+      polePopisu(b.popis, zmena('popis')),
+      el('label', { class: 'pole pole-reseni m-res' },
+        el('span', { class: 'popisek', text: 'Řešení — jak se to opravilo, commit' }),
+        el('textarea', { class: 'reseni-in', name: 'reseni', value: b.reseni, oninput: zmena('reseni') })),
+      poleObrazku()),
+    el('aside', { class: 'bok' },
+      prepinacStavu(b.stav, zmena('stav', true)),
+      prepinacPriority(b.priorita, zmena('priorita', true)),
+      prepinacTypu(b.typ || 'bug', zmena('typ', true)),
+      poleProjektu(b.projekt, zmena('projekt')),
+      pole('Řeší', prepinac('resi', [['', 'nikdo'], ...[...lide].map(([id, j]) => [id, j])], b.resi, zmena('resi', true)), 'm-ovl'),
+      el('div', { class: 'info m-info' }, el('div', { class: 'kdy' }, ...popisKdy(b)), stavUlozeni),
+      el('div', { class: 'akce m-akce' },
+        el('button', { type: 'button', class: 'btn danger', text: 'Smazat', onclick: () => smaz(b.id) }),
+        el('button', { class: 'btn primary', text: 'Hotovo' }))),
   );
-  f.elements.typ.value = b.typ || 'bug';
-  f.elements.stav.value = b.stav;
-  f.elements.priorita.value = b.priorita;
-  f.elements.resi.value = b.resi || '';
   ukazReseni(b);
   vykresliObrazky(b.screenshoty);
 }
+
+const idRadek = b => `${IKONA[b.typ] || IKONA.bug} ${b.typ === 'ukol' ? 'Úkol' : 'Bug'} #${b.id}`;
 
 // Řešení dává smysl až u rozdělaných a hotových; v Nahlášených jen když už tam něco je.
 function ukazReseni(b) {
@@ -897,9 +1056,9 @@ function ukazReseni(b) {
 }
 
 function popisKdy(b) {
-  let t = `#${b.id} · nahlásil ${jmeno(b.nahlasil)} ${datum(b.created_at)}`;
-  if (b.vyreseno_at) t += ` · vyřešeno ${datum(b.vyreseno_at)}`;
-  return t;
+  const radek = (k, v) => el('div', {}, k + ' ', el('b', { text: v }));
+  return [radek('Nahlásil', jmeno(b.nahlasil)), radek('Založeno', datum(b.created_at)),
+    b.vyreseno_at ? radek('Vyřešeno', datum(b.vyreseno_at)) : null].filter(Boolean);
 }
 
 async function smaz(id) {
@@ -1011,7 +1170,7 @@ function obrazkyZeSchranky(data) {
 // Jeden handler pro celou stránku: když je otevřený bug (nebo nový), obrázek
 // jde do něj — ať je fokus kdekoli. Jinak se založí nový záznam s obrázkem.
 document.addEventListener('paste', ev => {
-  if ($('#app').hidden || $('#nahled').open) return;
+  if ($('#app').hidden || document.querySelector('#nahled[open], #oznameni[open], #nastaveni[open]')) return;
   const soubory = obrazkyZeSchranky(ev.clipboardData);
   if (!soubory.length) return;
   ev.preventDefault();
@@ -1031,19 +1190,206 @@ for (const id of ['#fProjekt', '#fTyp', '#fPriorita', '#fMoje'])
   $(id).addEventListener('change', () => { ulozFiltry(); vykresli(); });
 $('#hledat').addEventListener('input', vykresli);
 
-$('#mojeJmeno').addEventListener('click', async () => {
-  const nove = prompt('Jak se má tvoje jméno ukazovat na kartách?', jmeno(ja));
-  if (!nove?.trim()) return;
+// ── Oznámení ──────────────────────────────────────────────
+// Seznam událostí je společný; co je „nové", počítá každý podle svého
+// lide.precteno_do (uloženo v databázi, takže platí na všech zařízeních).
+
+const DRUHY = {
+  novy:      { ik: t => IKONA[t] || IKONA.bug, text: t => t === 'ukol' ? 'Nový úkol' : 'Nový bug' },
+  resi_se:   { ik: () => '🔧', text: () => 'Řeší se' },
+  vyreseno:  { ik: () => '✅', text: t => t === 'ukol' ? 'Úkol hotový' : 'Bug vyřešen' },
+  nahlaseno: { ik: () => '↩️', text: () => 'Vráceno mezi nahlášené' },
+  obrazek:   { ik: () => '🖼', text: () => 'Nový obrázek' },
+  smazano:   { ik: () => '🗑', text: () => 'Smazáno' },
+};
+
+// Musí odpovídat VYCHOZI_PRAVIDLA v supabase/functions/bugnik/index.ts.
+const VYCHOZI_PRAVIDLA = {
+  novy_bug: ['telegram'], novy_ukol: ['telegram'],
+  resi_se_bug: [], resi_se_ukol: [],
+  vyreseno_bug: ['telegram'], vyreseno_ukol: ['telegram'],
+};
+const RADKY_PRAVIDEL = [
+  ['novy_bug', '🐞 Nový bug'], ['novy_ukol', '📋 Nový úkol'],
+  ['resi_se_bug', '🔧 Bug se začal řešit'], ['resi_se_ukol', '🔧 Úkol se začal řešit'],
+  ['vyreseno_bug', '✅ Bug vyřešen'], ['vyreseno_ukol', '✅ Úkol hotový'],
+];
+
+const jeNova = u => u.kdo !== ja && u.created_at > ja_radek.precteno_do;
+
+function pred(iso) {
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 60) return 'právě teď';
+  if (s < 3600) return `před ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `před ${Math.floor(s / 3600)} h`;
+  if (s < 7 * 86400) return `před ${Math.floor(s / 86400)} d`;
+  return datum(iso);
+}
+
+function obnovZvonek() {
+  const n = udalosti.filter(jeNova).length;
+  const o = $('#zvonek .odznak');
+  o.hidden = !n;
+  o.textContent = n > 99 ? '99+' : n;
+  document.title = n ? `(${n}) Bugník` : 'Bugník';
+}
+
+function novaUdalost(u) {
+  if (udalosti.some(x => x.id === u.id)) return;
+  udalosti.unshift(u);
+  udalosti.length = Math.min(udalosti.length, POCET_UDALOSTI);
+  obnovZvonek();
+  if ($('#oznameni').open) vykresliUdalosti();
+  if (u.kdo !== ja) upozorniVProhlizeci(u);
+}
+
+async function prenactiUdalosti() {
   try {
-    await dotaz(sb.from('lide').update({ jmeno: nove.trim() }).eq('id', ja));
-    lide.set(ja, nove.trim());
-    $('#mojeJmeno').textContent = nove.trim();
-    vykresli();
-  } catch (e) { chyba(e); }
+    udalosti = await dotaz(sb.from('udalosti').select('*').order('created_at', { ascending: false }).limit(POCET_UDALOSTI));
+    obnovZvonek();
+  } catch (e) { console.error(e); }
+}
+
+function vykresliUdalosti() {
+  const box = $('#oznameni .udalosti');
+  if (!udalosti.length) { box.replaceChildren(el('p', { class: 'poznamka', text: 'Zatím se nic nestalo.' })); return; }
+  box.replaceChildren(...udalosti.map(u => {
+    const d = DRUHY[u.druh] || { ik: () => '•', text: () => u.druh };
+    const existuje = bugy.has(u.bug_id);
+    return el('button', {
+      type: 'button', class: ['udalost', jeNova(u) && 'nova', !existuje && 'pryc'].filter(Boolean).join(' '),
+      onclick: () => { if (!existuje) return; $('#oznameni').close(); otevriDetail(u.bug_id); },
+    },
+      el('span', { class: 'ik', text: d.ik(u.typ) }),
+      el('span', { class: 'co', text: `#${u.bug_id} ${bugy.get(u.bug_id)?.nazev ?? u.nazev}` }),
+      el('span', { class: 'kdy', text: `${d.text(u.typ)} · ${jmeno(u.kdo)} · ${pred(u.created_at)}` }));
+  }));
+}
+
+$('#zvonek').addEventListener('click', async () => {
+  vykresliUdalosti();          // „nové" se ukážou zvýrazněné…
+  $('#oznameni').showModal();
+  const ted = new Date().toISOString();
+  try {                        // …a hned se označí jako viděné (jen pro mě)
+    await dotaz(sb.from('lide').update({ precteno_do: ted }).eq('id', ja));
+    ja_radek.precteno_do = ted;
+    obnovZvonek();
+  } catch (e) { console.error(e); }
+});
+$('#oznameni').addEventListener('click', ev => {
+  if (ev.target === ev.currentTarget || ev.target.closest('[data-zavrit]')) $('#oznameni').close();
 });
 
+// Upozornění v prohlížeči (jen když je Bugník otevřený někde na pozadí).
+// Zapíná se zvlášť v každém prohlížeči, proto localStorage, ne databáze.
+const prohlizecZapnut = () => { try { return localStorage.getItem('bugnik-notif') === '1'; } catch { return false; } };
+function upozorniVProhlizeci(u) {
+  if (!prohlizecZapnut() || !('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!document.hidden) return;
+  const d = DRUHY[u.druh];
+  const n = new Notification(`${d?.text(u.typ) ?? u.druh} · ${jmeno(u.kdo)}`, { body: `#${u.bug_id} ${u.nazev}`, tag: 'bugnik-' + u.id });
+  n.onclick = () => { window.focus(); if (bugy.has(u.bug_id)) otevriDetail(u.bug_id); n.close(); };
+}
+
+// ── Nastavení ─────────────────────────────────────────────
+const dlgNast = $('#nastaveni');
+const formNast = dlgNast.firstElementChild;
+dlgNast.addEventListener('click', ev => { if (ev.target === dlgNast) dlgNast.close(); });
+
+async function ulozNastaveni(zmeny) {
+  const nastaveni = { ...ja_radek.nastaveni, ...zmeny };
+  await dotaz(sb.from('lide').update({ nastaveni }).eq('id', ja));
+  ja_radek.nastaveni = nastaveni;
+}
+
+function vykresliTelegram() {
+  const box = $('.tg-stav', formNast);
+  if (!box) return;
+  const n = ja_radek.nastaveni || {};
+  const bot = BUGNIK.telegramBot;
+  if (!bot) { box.replaceChildren(el('span', { class: 'poznamka', text: 'Telegram zatím není nastavený (chybí bot v config.js).' })); return; }
+  if (n.telegram_chat_id) {
+    box.replaceChildren(el('span', { class: 'ok', text: '✓ Propojeno' }),
+      el('button', { type: 'button', class: 'btn', text: 'Odpojit', onclick: async () => {
+        try { await ulozNastaveni({ telegram_chat_id: null }); vykresliTelegram(); } catch (e) { chyba(e); }
+      } }));
+    return;
+  }
+  box.replaceChildren(el('span', { text: 'Nepropojeno' }),
+    el('button', { type: 'button', class: 'btn primary', text: 'Propojit Telegram', onclick: async () => {
+      // Jednorázový kód: bot ho dostane přes /start a podle něj pozná, kdo jsi.
+      const kod = crypto.randomUUID().replaceAll('-', '');
+      try {
+        await ulozNastaveni({ telegram_kod: kod });
+        window.open(`https://t.me/${bot}?start=${kod}`, '_blank');
+        box.replaceChildren(el('span', { class: 'poznamka',
+          text: 'V Telegramu klikni na START. Až bot odpoví „Propojeno ✅“, ukáže se to i tady.' }));
+      } catch (e) { chyba(e); }
+    } }));
+}
+
+function otevriNastaveni() {
+  const n = ja_radek.nastaveni || {};
+  const pravidla = { ...VYCHOZI_PRAVIDLA, ...(n.pravidla || {}) };
+  const ulozPravidla = async () => {
+    const nova = {};
+    for (const [klic] of RADKY_PRAVIDEL)
+      nova[klic] = ['telegram', 'email'].filter(k => formNast.elements[`${klic}:${k}`].checked);
+    try { await ulozNastaveni({ pravidla: nova }); stav.textContent = 'Uloženo ✓'; } catch (e) { chyba(e); }
+  };
+  const stav = el('span', { class: 'ulozeno poznamka' });
+  const podporaProhl = 'Notification' in window;
+
+  formNast.replaceChildren(
+    el('h3', {}, '⚙ Nastavení', el('button', { type: 'button', class: 'btn', text: 'Zavřít', onclick: () => dlgNast.close() })),
+    el('label', {}, 'Jméno na kartách', el('input', { name: 'jmeno', value: jmeno(ja), maxlength: 40,
+      onchange: async ev => {
+        const v = ev.target.value.trim();
+        if (!v) return;
+        try {
+          await dotaz(sb.from('lide').update({ jmeno: v }).eq('id', ja));
+          lide.set(ja, v);
+          $('#mojeJmeno').textContent = v;
+          vykresli();
+          stav.textContent = 'Uloženo ✓';
+        } catch (e) { chyba(e); }
+      } })),
+    el('label', {}, 'E-mail pro oznámení', el('input', { name: 'email', type: 'email', value: n.email ?? mujEmail,
+      placeholder: mujEmail, onchange: async ev => {
+        try { await ulozNastaveni({ email: ev.target.value.trim() }); stav.textContent = 'Uloženo ✓'; } catch (e) { chyba(e); }
+      } })),
+    el('label', {}, 'Telegram', el('div', { class: 'tg-stav' })),
+    el('div', {},
+      el('table', { class: 'matice' },
+        el('thead', {}, el('tr', {}, el('th', { text: 'Kam co posílat' }), el('th', { text: 'Telegram' }), el('th', { text: 'E-mail' }))),
+        el('tbody', {}, RADKY_PRAVIDEL.map(([klic, popisek]) => el('tr', {},
+          el('td', { text: popisek }),
+          ['telegram', 'email'].map(k => el('td', {}, el('input', { type: 'checkbox', name: `${klic}:${k}`,
+            checked: pravidla[klic]?.includes(k), onchange: ulozPravidla }))))))),
+      el('p', { class: 'poznamka', text: 'Všechno ostatní (vrácení, obrázky, smazání) uvidíš v 🔔 na webu.' })),
+    el('label', { class: 'chk' }, el('input', { type: 'checkbox', checked: !!n.sve, onchange: async ev => {
+      try { await ulozNastaveni({ sve: ev.target.checked }); stav.textContent = 'Uloženo ✓'; } catch (e) { chyba(e); }
+    } }), 'Posílat zprávy i o mých vlastních akcích'),
+    el('label', { class: 'chk' }, el('input', { type: 'checkbox', checked: prohlizecZapnut(), disabled: !podporaProhl,
+      onchange: async ev => {
+        const zap = ev.target.checked;
+        if (zap && Notification.permission !== 'granted' && await Notification.requestPermission() !== 'granted') {
+          ev.target.checked = false;
+          alert('Prohlížeč upozornění nepovolil. Povol je v nastavení stránky (ikona zámku vedle adresy).');
+          return;
+        }
+        try { localStorage.setItem('bugnik-notif', zap ? '1' : '0'); } catch {}
+      } }), 'Upozornění v tomhle prohlížeči, když mám Bugník otevřený na pozadí'),
+    stav,
+  );
+  vykresliTelegram();
+  dlgNast.showModal();
+}
+$('#ozubene').addEventListener('click', otevriNastaveni);
+$('#mojeJmeno').addEventListener('click', otevriNastaveni);
+
 document.addEventListener('keydown', ev => {
-  if (dlg.open || ev.target.closest('input, textarea, select') || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (document.querySelector('dialog[open]') || ev.target.closest('input, textarea, select') || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   if (ev.key === '/') { ev.preventDefault(); $('#hledat').focus(); }
   if (ev.key === 'n') { ev.preventDefault(); otevriNovy(); }
 });
