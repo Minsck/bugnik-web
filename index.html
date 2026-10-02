@@ -66,16 +66,31 @@ header label.chk input { width: auto; }
 .spojeni { width: 9px; height: 9px; border-radius: 50%; background: var(--p3); }
 .spojeni.ok { background: var(--ok); }
 
-nav.taby { flex: 1 1 100%; display: flex; gap: 2px; overflow-x: auto; margin-top: 4px; }
+nav.taby { flex: 1 1 100%; display: flex; gap: 2px; overflow-x: auto; margin-top: 4px; align-items: stretch; }
+/* Skupina Bugy / Úkoly: svislá čára vlevo + popisek, aktivní skupina má jemné podbarvení. */
+nav.taby .skupina {
+  display: flex; align-items: stretch; gap: 2px; margin-left: 10px; padding-left: 10px;
+  border-left: 2px solid var(--line); border-radius: 8px 8px 0 0;
+}
+nav.taby .skupina.v-ni { background: var(--panel); border-left-color: var(--accent); }
+nav.taby .skupina-nazev {
+  display: inline-flex; gap: 6px; align-items: center; padding: 0 8px 0 4px; white-space: nowrap;
+  font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text);
+}
 nav.taby button {
-  border: none; background: none; padding: 8px 14px; color: var(--muted); white-space: nowrap;
-  border-bottom: 2px solid transparent; font-weight: 600;
+  border: none; background: none; padding: 9px 14px; color: var(--text); white-space: nowrap;
+  border-bottom: 3px solid transparent; font-weight: 600;
   display: inline-flex; gap: 6px; align-items: center;
 }
 .ik-svg { width: 16px; height: 16px; flex: none; }
-nav.taby button:hover { color: var(--text); }
-nav.taby button.aktivni { color: var(--accent); border-bottom-color: var(--accent); }
-nav.taby .n { font-weight: 400; }
+nav.taby button:hover { background: var(--card); border-radius: 6px 6px 0 0; }
+nav.taby button.aktivni { color: #fff; border-bottom-color: var(--accent); font-weight: 800; }
+nav.taby button.aktivni .ik-svg { color: var(--accent); }
+nav.taby .n {
+  font-weight: 700; font-size: 11px; background: var(--line); color: #fff;
+  border-radius: 99px; padding: 1px 7px; min-width: 20px; text-align: center;
+}
+nav.taby button.aktivni .n { background: var(--accent); color: #000; }
 
 /* ── Přehled (kanban) ───────────────────────────────────── */
 main.kanban {
@@ -409,7 +424,8 @@ const IKONY_SVG = {
   nahlaseno: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
   resi_se:   '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   vyreseno:  '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-  ukoly:     '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  bug:       '<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>',
+  ukol:      '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
 };
 function ikona(klic) {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -424,10 +440,12 @@ const SLOUPCE = [
   { stav: 'resi_se',   nazev: 'Řeší se' },
   { stav: 'vyreseno',  nazev: 'Vyřešené' },
 ];
-// Tab Úkoly je vlastní přehled (kanban) jen s úkoly — ostatní taby se řídí filtrem typu,
-// který je ve výchozím stavu „Jen bugy".
-const TABY = [{ id: 'prehled', nazev: 'Přehled' }, ...SLOUPCE.map(s => ({ id: s.stav, nazev: s.nazev })),
-  { id: 'ukoly', nazev: 'Úkoly' }];
+// Přehled = kanban s bugy i úkoly (typ jde zúžit filtrem). Pak dvě skupiny tabulek podle stavu:
+// bugy a úkoly zvlášť (id „b-nahlaseno", „u-vyreseno"… — ne „bug-…", to je odkaz na detail).
+const SKUPINY = [{ typ: 'bug', nazev: 'Bugy' }, { typ: 'ukol', nazev: 'Úkoly' }];
+const TABY = [{ id: 'prehled', nazev: 'Přehled' },
+  ...SKUPINY.flatMap(g => SLOUPCE.map(s => ({ id: g.typ[0] + '-' + s.stav, typ: g.typ, stav: s.stav, nazev: s.nazev })))];
+const tabInfo = () => TABY.find(t => t.id === tab) || TABY[0];
 const PRIORITY = { 1: '🔴 Vysoká', 2: '🟠 Střední', 3: '⚪ Nízká' };
 const TYPY = { bug: '🐞 Bug', ukol: '📋 Úkol' };
 const IKONA = { bug: '🐞', ukol: '📋' };
@@ -499,8 +517,8 @@ function maObsah(b) {
   return b.screenshoty?.length > 0 || !!(b.popis || '').trim() || (!!nazev && nazev !== VYCHOZI_NAZEV);
 }
 
-const VYCHOZI_TYP = 'bug';
-const KLIC_FILTRU = 'bugnik-filtry3'; // nový klíč → u všech se jednou nastaví výchozí Čundr + Jen bugy
+const VYCHOZI_TYP = '';  // Přehled ukazuje bugy i úkoly
+const KLIC_FILTRU = 'bugnik-filtry4'; // nový klíč → u všech se jednou nastaví výchozí Čundr + bugy i úkoly
 function ulozFiltry() {
   try {
     localStorage.setItem(KLIC_FILTRU, JSON.stringify({
@@ -644,7 +662,10 @@ function obnovOsoby() {
 function tabZOdkazu() {
   const h = location.hash.slice(1);
   if (TABY.some(t => t.id === h)) return h;
-  try { return localStorage.getItem('bugnik-tab') || 'prehled'; } catch { return 'prehled'; }
+  try {
+    const ulozeny = localStorage.getItem('bugnik-tab');
+    return TABY.some(t => t.id === ulozeny) ? ulozeny : 'prehled';   // staré „ukoly" apod. už neexistují
+  } catch { return 'prehled'; }
 }
 function prepniTab(id) {
   tab = id;
@@ -673,19 +694,25 @@ function vykresliTaby() {
   const p = $('#fProjekt').value;
   $('#fVrstva').parentElement.hidden = !!p && p !== PROJEKT_S_VRSTVAMI;   // před počty — filtr vrstvy platí jen viditelný
   const pocty = {};
-  for (const b of bugy.values()) if (prosloFiltrem(b, $('#fTyp').value)) pocty[b.stav] = (pocty[b.stav] || 0) + 1;
-  // U Úkolů jen nevyřešené — kolik jich ještě zbývá.
-  pocty.ukoly = [...bugy.values()].filter(b => b.stav !== 'vyreseno' && prosloFiltrem(b, 'ukol')).length;
-  $('#fTyp').parentElement.hidden = tab === 'ukoly';
+  for (const b of bugy.values()) {
+    const id = (b.typ || 'bug')[0] + '-' + b.stav;
+    if (prosloFiltrem(b, b.typ || 'bug')) pocty[id] = (pocty[id] || 0) + 1;
+  }
+  $('#fTyp').parentElement.hidden = tab !== 'prehled';   // v tabulkách určuje typ skupina
   ukazPocetFiltru();
-  $('nav.taby').replaceChildren(...TABY.map(t => el('button', {
+  const tlacitko = t => el('button', {
     type: 'button', class: t.id === tab ? 'aktivni' : null, onclick: () => prepniTab(t.id),
-  }, ikona(t.id), t.nazev, t.id !== 'prehled' ? el('span', { class: 'n', text: ` (${pocty[t.id] || 0})` }) : null)));
+  }, ikona(t.stav || t.id), t.nazev, t.stav ? el('span', { class: 'n', text: String(pocty[t.id] || 0) }) : null);
+  const aktivniTyp = tabInfo().typ;
+  $('nav.taby').replaceChildren(tlacitko(TABY[0]), ...SKUPINY.map(g => el('div', {
+    class: 'skupina' + (g.typ === aktivniTyp ? ' v-ni' : ''), role: 'group', 'aria-label': g.nazev },
+    el('span', { class: 'skupina-nazev' }, ikona(g.typ), g.nazev),
+    TABY.filter(t => t.typ === g.typ).map(tlacitko))));
 }
 
 // ── Filtry ────────────────────────────────────────────────
-// Typ, podle kterého se teď filtruje: v tabu Úkoly vždy úkoly, jinak podle výběru v liště.
-const typFiltru = () => tab === 'ukoly' ? 'ukol' : $('#fTyp').value;
+// Typ, podle kterého se teď filtruje: v tabulkách podle skupiny, v Přehledu podle filtru.
+const typFiltru = () => tabInfo().typ || $('#fTyp').value;
 
 function prosloFiltrem(b, t = typFiltru()) {
   const p = $('#fProjekt').value, r = $('#fPriorita').value;
@@ -706,8 +733,8 @@ function prosloFiltrem(b, t = typFiltru()) {
 
 function vykresli() {
   vykresliTaby();
-  if (tab === 'prehled' || tab === 'ukoly') vykresliKanban();
-  else vykresliTabulku(tab);
+  if (tab === 'prehled') vykresliKanban();
+  else vykresliTabulku(tabInfo().stav);
 }
 
 // ── Přehled (kanban) ──────────────────────────────────────
@@ -839,7 +866,7 @@ function vychoziRazeni(stav) {
 function vykresliTabulku(stav) {
   const main = $('main');
   main.className = 'tabulka';
-  const r = razeni[stav] ||= vychoziRazeni(stav);
+  const r = razeni[tab] ||= vychoziRazeni(stav);
   const sl = SLOUPCE_TABULKY.find(s => s.klic === r.klic);
   const radky = [...bugy.values()].filter(b => b.stav === stav && prosloFiltrem(b)).sort((a, b) => {
     const x = sl.hodnota(a), y = sl.hodnota(b);
@@ -854,7 +881,7 @@ function vykresliTabulku(stav) {
 
   const sloupce = SLOUPCE_TABULKY.filter(s => !s.jen || s.jen === stav);
   const razeniKlik = klic => {
-    razeni[stav] = r.klic === klic ? { klic, smer: -r.smer } : { klic, smer: klic.endsWith('_at') ? -1 : 1 };
+    razeni[tab] = r.klic === klic ? { klic, smer: -r.smer } : { klic, smer: klic.endsWith('_at') ? -1 : 1 };
     vykresli();
   };
   main.replaceChildren(el('table', {},
