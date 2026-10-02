@@ -273,7 +273,10 @@ const SLOUPCE = [
   { stav: 'resi_se',   nazev: 'Řeší se' },
   { stav: 'vyreseno',  nazev: 'Vyřešené' },
 ];
-const TABY = [{ id: 'prehled', nazev: 'Přehled' }, ...SLOUPCE.map(s => ({ id: s.stav, nazev: s.nazev }))];
+// Tab Úkoly je vlastní přehled (kanban) jen s úkoly — ostatní taby se řídí filtrem typu,
+// který je ve výchozím stavu „Jen bugy".
+const TABY = [{ id: 'prehled', nazev: 'Přehled' }, ...SLOUPCE.map(s => ({ id: s.stav, nazev: s.nazev })),
+  { id: 'ukoly', nazev: '📋 Úkoly' }];
 const PRIORITY = { 1: '🔴 Vysoká', 2: '🟠 Střední', 3: '⚪ Nízká' };
 const TYPY = { bug: '🐞 Bug', ukol: '📋 Úkol' };
 const IKONA = { bug: '🐞', ukol: '📋' };
@@ -335,7 +338,8 @@ function maObsah(b) {
   return b.screenshoty?.length > 0 || !!(b.popis || '').trim() || (!!nazev && nazev !== VYCHOZI_NAZEV);
 }
 
-const KLIC_FILTRU = 'bugnik-filtry2'; // nový klíč → u všech se jednou nastaví výchozí Čundr
+const VYCHOZI_TYP = 'bug';
+const KLIC_FILTRU = 'bugnik-filtry3'; // nový klíč → u všech se jednou nastaví výchozí Čundr + Jen bugy
 function ulozFiltry() {
   try {
     localStorage.setItem(KLIC_FILTRU, JSON.stringify({
@@ -346,13 +350,13 @@ function ulozFiltry() {
 function nactiFiltry() {
   try {
     const ulozene = localStorage.getItem(KLIC_FILTRU);
-    if (!ulozene) return VYCHOZI_PROJEKT;
+    if (!ulozene) { $('#fTyp').value = VYCHOZI_TYP; return VYCHOZI_PROJEKT; }
     const f = JSON.parse(ulozene);
-    $('#fTyp').value = f.t || '';
+    $('#fTyp').value = f.t ?? VYCHOZI_TYP;
     $('#fPriorita').value = f.r || '';
     $('#fMoje').checked = !!f.m;
     return f.p ?? VYCHOZI_PROJEKT;
-  } catch { return VYCHOZI_PROJEKT; }
+  } catch { $('#fTyp').value = VYCHOZI_TYP; return VYCHOZI_PROJEKT; }
 }
 
 // ── Přihlášení ────────────────────────────────────────────
@@ -460,15 +464,21 @@ window.addEventListener('hashchange', () => { if (spusteno) { tab = tabZOdkazu()
 
 function vykresliTaby() {
   const pocty = {};
-  for (const b of bugy.values()) if (prosloFiltrem(b)) pocty[b.stav] = (pocty[b.stav] || 0) + 1;
+  for (const b of bugy.values()) if (prosloFiltrem(b, $('#fTyp').value)) pocty[b.stav] = (pocty[b.stav] || 0) + 1;
+  // U Úkolů jen nevyřešené — kolik jich ještě zbývá.
+  pocty.ukoly = [...bugy.values()].filter(b => b.stav !== 'vyreseno' && prosloFiltrem(b, 'ukol')).length;
+  $('#fTyp').hidden = tab === 'ukoly';
   $('nav.taby').replaceChildren(...TABY.map(t => el('button', {
     type: 'button', class: t.id === tab ? 'aktivni' : null, onclick: () => prepniTab(t.id),
   }, t.nazev, t.id !== 'prehled' ? el('span', { class: 'n', text: ` (${pocty[t.id] || 0})` }) : null)));
 }
 
 // ── Filtry ────────────────────────────────────────────────
-function prosloFiltrem(b) {
-  const p = $('#fProjekt').value, r = $('#fPriorita').value, t = $('#fTyp').value;
+// Typ, podle kterého se teď filtruje: v tabu Úkoly vždy úkoly, jinak podle výběru v liště.
+const typFiltru = () => tab === 'ukoly' ? 'ukol' : $('#fTyp').value;
+
+function prosloFiltrem(b, t = typFiltru()) {
+  const p = $('#fProjekt').value, r = $('#fPriorita').value;
   if (p && b.projekt !== p) return false;
   if (t && (b.typ || 'bug') !== t) return false;
   if (r && String(b.priorita) !== r) return false;
@@ -483,7 +493,7 @@ function prosloFiltrem(b) {
 
 function vykresli() {
   vykresliTaby();
-  if (tab === 'prehled') vykresliKanban();
+  if (tab === 'prehled' || tab === 'ukoly') vykresliKanban();
   else vykresliTabulku(tab);
 }
 
@@ -505,7 +515,7 @@ function vykresliKanban() {
 
 function sloupec({ stav, nazev }) {
   const vse = serad(stav);
-  let viditelne = vse.filter(prosloFiltrem);
+  let viditelne = vse.filter(b => prosloFiltrem(b));
   const skryto = stav === 'vyreseno' && !vsechnyVyresene ? Math.max(0, viditelne.length - VYRESENYCH_NAHLED) : 0;
   if (skryto) viditelne = viditelne.slice(0, VYRESENYCH_NAHLED);
 
@@ -528,8 +538,8 @@ function rychlePridani() {
     const nazev = inp.value.trim();
     if (!nazev) return;
     inp.value = '';
-    try { await zalozBug({ nazev, typ: $('#fTyp').value || 'bug' }); } catch (e) { inp.value = nazev; chyba(e); }
-  } }, el('input', { placeholder: '+ Rychle zapsat a Enter', maxlength: 200 }));
+    try { await zalozBug({ nazev, typ: typFiltru() || 'bug' }); } catch (e) { inp.value = nazev; chyba(e); }
+  } }, el('input', { placeholder: typFiltru() === 'ukol' ? '+ Rychle zapsat úkol a Enter' : '+ Rychle zapsat bug a Enter', maxlength: 200 }));
 }
 
 function karta(b) {
@@ -745,7 +755,7 @@ function otevriDetail(id) {
 
 function otevriNovy(soubory = []) {
   koncept = {
-    typ: $('#fTyp').value || 'bug', nazev: '', popis: '', projekt: $('#fProjekt').value || VYCHOZI_PROJEKT,
+    typ: typFiltru() || 'bug', nazev: '', popis: '', projekt: $('#fProjekt').value || VYCHOZI_PROJEKT,
     priorita: 2, screenshoty: [],
   };
   otevreny = 'novy';
