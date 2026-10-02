@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bugník</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐞</text></svg>">
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ebedf0; --card: #fff; --text: #1d2026; --muted: #6b7280;
+  --line: #d9dce1; --accent: #2563eb; --accent-soft: #dbe6fd;
+  --p1: #dc2626; --p2: #ea8a0c; --p3: #9ca3af;
+  --ok: #16a34a; --flash: #fde68a;
+  --shadow: 0 1px 2px rgb(0 0 0 / .08), 0 1px 1px rgb(0 0 0 / .04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171b; --panel: #1d2026; --card: #262a31; --text: #e6e8eb; --muted: #9aa1ac;
+    --line: #343941; --accent: #6b9cff; --accent-soft: #233559;
+    --p1: #f87171; --p2: #fbbf24; --p3: #6b7280;
+    --ok: #4ade80; --flash: #5b4a12;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+/* ── Přihlášení ─────────────────────────────────────────── */
+#login { display: grid; place-items: center; min-height: 100%; padding: 16px; }
+#login form {
+  background: var(--card); padding: 28px; border-radius: 12px; box-shadow: var(--shadow);
+  width: 100%; max-width: 340px; display: grid; gap: 12px;
+}
+#login h1 { margin: 0 0 4px; font-size: 22px; }
+#login .chyba { color: var(--p1); font-size: 13px; min-height: 1em; }
+
+input, select, textarea {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.btn {
+  border: 1px solid var(--line); background: var(--card); border-radius: 8px;
+  padding: 7px 12px; white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--p1); }
+
+/* ── Horní lišta ────────────────────────────────────────── */
+header {
+  position: sticky; top: 0; z-index: 5; background: var(--bg);
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+}
+header .logo { font-weight: 700; font-size: 18px; margin-right: 8px; }
+header .filtry { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; align-items: center; }
+header .filtry input[type=search] { max-width: 220px; }
+header .filtry select { width: auto; }
+header label.chk { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+header label.chk input { width: auto; }
+.ja { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+.ja b { color: var(--text); cursor: pointer; border-bottom: 1px dashed var(--muted); }
+.spojeni { width: 9px; height: 9px; border-radius: 50%; background: var(--p3); }
+.spojeni.ok { background: var(--ok); }
+
+/* ── Nástěnka ───────────────────────────────────────────── */
+main {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  padding: 16px; align-items: start;
+}
+.sloupec {
+  background: var(--panel); border-radius: 12px; padding: 10px;
+  display: flex; flex-direction: column; gap: 8px; min-height: 200px;
+}
+.sloupec.nad { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.sloupec h2 {
+  margin: 2px 4px 2px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); display: flex; justify-content: space-between;
+}
+.sloupec h2 .pocet { background: var(--card); border-radius: 99px; padding: 0 8px; }
+.rychly input { background: var(--card); }
+.karty { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+.dalsi { background: none; border: none; color: var(--accent); padding: 4px; }
+
+.karta {
+  background: var(--card); border-radius: 8px; padding: 9px 10px 8px 12px;
+  box-shadow: var(--shadow); cursor: pointer; position: relative;
+  border-left: 4px solid var(--p3); transition: background .6s;
+}
+.karta[data-p="1"] { border-left-color: var(--p1); }
+.karta[data-p="2"] { border-left-color: var(--p2); }
+.karta:hover { outline: 1px solid var(--line); }
+.karta.tahnu { opacity: .4; }
+.karta.blik { background: var(--flash); transition: none; }
+.karta .nazev { font-weight: 600; word-break: break-word; }
+.sloupec[data-stav="vyreseno"] .karta .nazev { text-decoration: line-through; color: var(--muted); }
+.karta .meta {
+  display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 6px;
+  font-size: 12px; color: var(--muted); align-items: center;
+}
+.tag { background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 0 6px; font-weight: 600; }
+.karta .sipky { margin-left: auto; display: flex; gap: 2px; }
+.karta .sipky button {
+  border: none; background: none; color: var(--muted); padding: 0 5px; font-size: 15px; border-radius: 4px;
+}
+.karta .sipky button:hover { background: var(--panel); color: var(--text); }
+.misto { height: 3px; background: var(--accent); border-radius: 2px; }
+
+/* ── Detail bugu ────────────────────────────────────────── */
+dialog {
+  border: none; border-radius: 12px; padding: 0; width: min(640px, calc(100% - 32px));
+  background: var(--card); color: var(--text); box-shadow: 0 10px 40px rgb(0 0 0 / .3);
+}
+dialog::backdrop { background: rgb(0 0 0 / .4); }
+.detail { padding: 18px; display: grid; gap: 12px; }
+.detail .nazev-in { font-size: 18px; font-weight: 600; }
+.detail .radek { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.detail label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.detail textarea { min-height: 90px; resize: vertical; }
+.detail .paticka {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--muted);
+}
+.detail .ulozeno { color: var(--ok); }
+.obrazky { display: flex; flex-wrap: wrap; gap: 8px; }
+.obrazek { position: relative; }
+.obrazek img {
+  height: 90px; max-width: 160px; object-fit: cover; border-radius: 6px;
+  border: 1px solid var(--line); cursor: zoom-in; display: block;
+}
+.obrazek button {
+  position: absolute; top: 2px; right: 2px; border: none; border-radius: 50%;
+  width: 22px; height: 22px; background: rgb(0 0 0 / .6); color: #fff; font-size: 12px;
+}
+.vlozit {
+  border: 1px dashed var(--line); border-radius: 6px; height: 90px; padding: 0 14px;
+  display: grid; place-items: center; color: var(--muted); font-size: 12px; text-align: center;
+  background: none;
+}
+#nahled { width: auto; max-width: 95vw; background: none; box-shadow: none; }
+#nahled img { max-width: 95vw; max-height: 90vh; display: block; border-radius: 8px; }
+
+@media (max-width: 800px) {
+  main { grid-template-columns: minmax(0, 1fr); }
+  /* Logo a „já" na prvním řádku, filtry pod nimi přes celou šířku. */
+  header .ja { margin-left: auto; }
+  header .filtry { order: 3; flex: 1 1 100%; }
+  header .filtry input[type=search] { max-width: none; flex: 1 1 100%; }
+  header .filtry select { flex: 1 1 0; min-width: 0; }
+  #novy { margin-left: auto; }
+}
+</style>
+</head>
+<body>
+
+<section id="login" hidden>
+  <form>
+    <h1>🐞 Bugník</h1>
+    <input name="email" type="email" placeholder="E-mail" autocomplete="username" required>
+    <input name="heslo" type="password" placeholder="Heslo" autocomplete="current-password" required>
+    <button class="btn primary">Přihlásit</button>
+    <div class="chyba"></div>
+  </form>
+</section>
+
+<section id="app" hidden>
+  <header>
+    <span class="logo">🐞 Bugník</span>
+    <div class="filtry">
+      <input type="search" id="hledat" placeholder="Hledat… ( / )">
+      <select id="fProjekt"><option value="">Všechny projekty</option></select>
+      <select id="fPriorita">
+        <option value="">Každá priorita</option>
+        <option value="1">🔴 Vysoká</option>
+        <option value="2">🟠 Střední</option>
+        <option value="3">⚪ Nízká</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="fMoje"> Jen moje</label>
+      <button class="btn primary" id="novy">+ Nový bug</button>
+    </div>
+    <div class="ja">
+      <span class="spojeni" title="Živé spojení"></span>
+      <b id="mojeJmeno" title="Změnit jméno"></b>
+      <button class="btn" id="odhlasit">Odhlásit</button>
+    </div>
+  </header>
+  <main></main>
+</section>
+
+<dialog id="detail"><form method="dialog" class="detail"></form></dialog>
+<dialog id="nahled"><img alt=""></dialog>
+
+<datalist id="projekty"></datalist>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+'use strict';
+
+const SLOUPCE = [
+  { stav: 'nahlaseno', nazev: 'Nahlášené' },
+  { stav: 'resi_se',   nazev: 'Řeší se' },
+  { stav: 'vyreseno',  nazev: 'Vyřešené' },
+];
+const PRIORITY = { 1: '🔴 Vysoká', 2: '🟠 Střední', 3: '⚪ Nízká' };
+const ZAKLADNI_PROJEKTY = ['Čundr', 'DOKUL', 'Atlas', 'Moje Hra'];
+const VYRESENYCH_NAHLED = 30; // víc se ve sloupci Vyřešené ukáže až na klik
+
+if (!window.BUGNIK) {
+  document.body.textContent = 'Chybí config.js — zkopíruj config.example.js jako config.js a doplň údaje ze Supabase.';
+  throw new Error('chybí config.js');
+}
+const sb = supabase.createClient(BUGNIK.url, BUGNIK.anonKey);
+const $ = (s, el = document) => el.querySelector(s);
+
+let ja = null;                 // uuid přihlášeného
+const bugy = new Map();        // id → řádek
+const lide = new Map();        // id → jméno
+let vsechnyVyresene = false;
+let otevreny = null;           // id bugu v detailu
+
+// ── Pomocníci ─────────────────────────────────────────────
+function el(tag, attrs = {}, ...deti) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'text') e.textContent = v;
+    else if (k in e && k !== 'list') e[k] = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const d of deti.flat()) if (d != null) e.append(d);
+  return e;
+}
+const jmeno = id => (id && lide.get(id)) || '—';
+function datum(iso) {
+  const d = new Date(iso);
+  const dnes = new Date();
+  const opt = d.getFullYear() === dnes.getFullYear()
+    ? { day: 'numeric', month: 'numeric' } : { day: 'numeric', month: 'numeric', year: 'numeric' };
+  return d.toLocaleDateString('cs-CZ', opt);
+}
+function chyba(e) {
+  console.error(e);
+  alert('Něco se nepovedlo: ' + (e.message || e));
+}
+async function dotaz(p) {
+  const { data, error } = await p;
+  if (error) throw error;
+  return data;
+}
+function ulozFiltry() {
+  try {
+    localStorage.setItem('bugnik-filtry', JSON.stringify({
+      p: $('#fProjekt').value, r: $('#fPriorita').value, m: $('#fMoje').checked,
+    }));
+  } catch {}
+}
+function nactiFiltry() {
+  try {
+    const f = JSON.parse(localStorage.getItem('bugnik-filtry') || '{}');
+    $('#fPriorita').value = f.r || '';
+    $('#fMoje').checked = !!f.m;
+    return f.p || '';
+  } catch { return ''; }
+}
+
+// ── Přihlášení ────────────────────────────────────────────
+$('#login form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const f = ev.target;
+  $('.chyba', f).textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: f.email.value, password: f.heslo.value });
+  if (error) $('.chyba', f).textContent = 'Špatný e-mail nebo heslo.';
+});
+$('#odhlasit').addEventListener('click', () => sb.auth.signOut());
+
+let spusteno = false;
+sb.auth.onAuthStateChange((_ev, session) => {
+  const prihlasen = !!session;
+  $('#login').hidden = prihlasen;
+  $('#app').hidden = !prihlasen;
+  if (prihlasen && !spusteno) { spusteno = true; ja = session.user.id; start().catch(chyba); }
+  if (!prihlasen && spusteno) location.reload();
+});
+
+// ── Start: načíst data a odebírat změny ───────────────────
+async function start() {
+  const [l, b] = await Promise.all([
+    dotaz(sb.from('lide').select('id, jmeno')),
+    dotaz(sb.from('bugs').select('*')),
+  ]);
+  l.forEach(r => lide.set(r.id, r.jmeno));
+  b.forEach(r => bugy.set(r.id, r));
+  $('#mojeJmeno').textContent = jmeno(ja);
+  obnovProjekty(nactiFiltry());
+  vykresli();
+
+  sb.channel('bugnik')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bugs' }, zmena => {
+      if (zmena.eventType === 'DELETE') {
+        bugy.delete(zmena.old.id);
+        if (otevreny === zmena.old.id) $('#detail').close();
+      } else {
+        const r = zmena.new;
+        const cizi = r.upravil && r.upravil !== ja;
+        bugy.set(r.id, r);
+        if (cizi && otevreny === r.id) vyplnDetail(r, true);
+        obnovProjekty();
+        vykresli();
+        if (cizi) blikni(r.id);
+        return;
+      }
+      vykresli();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'lide' }, zmena => {
+      if (zmena.new?.id) lide.set(zmena.new.id, zmena.new.jmeno);
+      $('#mojeJmeno').textContent = jmeno(ja);
+      vykresli();
+    })
+    .subscribe(stav => {
+      $('.spojeni').classList.toggle('ok', stav === 'SUBSCRIBED');
+      $('.spojeni').title = stav === 'SUBSCRIBED' ? 'Živé spojení — změny se propisují hned' : 'Spojení se navazuje…';
+      // Po výpadku spojení (uspaný notebook) dotáhnout, co se mezitím změnilo.
+      if (stav === 'SUBSCRIBED' && bugy.size) prenacti();
+    });
+}
+
+async function prenacti() {
+  const b = await dotaz(sb.from('bugs').select('*'));
+  bugy.clear();
+  b.forEach(r => bugy.set(r.id, r));
+  obnovProjekty();
+  vykresli();
+}
+
+function blikni(id) {
+  const k = document.querySelector(`.karta[data-id="${id}"]`);
+  if (!k) return;
+  k.classList.add('blik');
+  setTimeout(() => k.classList.remove('blik'), 900);
+}
+
+function obnovProjekty(vybrat) {
+  const vse = new Set(ZAKLADNI_PROJEKTY);
+  for (const b of bugy.values()) if (b.projekt) vse.add(b.projekt);
+  const serazene = [...vse].sort((a, b) => a.localeCompare(b, 'cs'));
+  const sel = $('#fProjekt');
+  const aktualni = vybrat ?? sel.value;
+  sel.replaceChildren(el('option', { value: '', text: 'Všechny projekty' }),
+    ...serazene.map(p => el('option', { value: p, text: p })));
+  sel.value = serazene.includes(aktualni) ? aktualni : '';
+  $('#projekty').replaceChildren(...serazene.map(p => el('option', { value: p })));
+}
+
+// ── Nástěnka ──────────────────────────────────────────────
+function prosloFiltrem(b) {
+  const p = $('#fProjekt').value, r = $('#fPriorita').value;
+  if (p && b.projekt !== p) return false;
+  if (r && String(b.priorita) !== r) return false;
+  if ($('#fMoje').checked && b.resi !== ja && b.nahlasil !== ja) return false;
+  const q = $('#hledat').value.trim().toLowerCase();
+  if (q) {
+    const text = [b.nazev, b.popis, b.reseni, b.projekt, '#' + b.id].join(' ').toLowerCase();
+    if (!q.split(/\s+/).every(s => text.includes(s))) return false;
+  }
+  return true;
+}
+
+function serad(stav) {
+  const v = [...bugy.values()].filter(b => b.stav === stav);
+  // Vyřešené: nejčerstvější nahoře; ostatní podle ručního pořadí.
+  if (stav === 'vyreseno') return v.sort((a, b) => (b.vyreseno_at || '').localeCompare(a.vyreseno_at || ''));
+  return v.sort((a, b) => a.poradi - b.poradi || b.id - a.id);
+}
+
+function vykresli() {
+  const main = $('main');
+  const scroll = [...main.querySelectorAll('.karty')].map(k => k.scrollTop);
+  main.replaceChildren(...SLOUPCE.map(s => sloupec(s)));
+  main.querySelectorAll('.karty').forEach((k, i) => { k.scrollTop = scroll[i] || 0; });
+}
+
+function sloupec({ stav, nazev }) {
+  const vse = serad(stav);
+  let viditelne = vse.filter(prosloFiltrem);
+  const skryto = stav === 'vyreseno' && !vsechnyVyresene ? Math.max(0, viditelne.length - VYRESENYCH_NAHLED) : 0;
+  if (skryto) viditelne = viditelne.slice(0, VYRESENYCH_NAHLED);
+
+  const karty = el('div', { class: 'karty' }, viditelne.map(karta));
+  const s = el('section', { class: 'sloupec', 'data-stav': stav },
+    el('h2', {}, nazev, el('span', { class: 'pocet', text: viditelne.length + skryto })),
+    stav === 'nahlaseno' ? rychlePridani() : null,
+    karty,
+    skryto ? el('button', { class: 'dalsi', text: `Zobrazit dalších ${skryto}`,
+      onclick: () => { vsechnyVyresene = true; vykresli(); } }) : null,
+  );
+  napojDrop(s, karty, stav);
+  return s;
+}
+
+function rychlePridani() {
+  return el('form', { class: 'rychly', onsubmit: async ev => {
+    ev.preventDefault();
+    const inp = ev.target.elements[0];
+    const nazev = inp.value.trim();
+    if (!nazev) return;
+    inp.value = '';
+    try { await zalozBug({ nazev }); } catch (e) { inp.value = nazev; chyba(e); }
+  } }, el('input', { placeholder: '+ Rychle zapsat bug a Enter', maxlength: 200 }));
+}
+
+function karta(b) {
+  const i = SLOUPCE.findIndex(s => s.stav === b.stav);
+  const posun = (smer, ev) => { ev.stopPropagation(); presun(b.id, SLOUPCE[i + smer].stav); };
+  return el('article', {
+    class: 'karta', 'data-id': b.id, 'data-p': b.priorita, draggable: true,
+    onclick: () => otevriDetail(b.id),
+    ondragstart: ev => { ev.dataTransfer.setData('text/plain', b.id); ev.currentTarget.classList.add('tahnu'); },
+    ondragend: ev => ev.currentTarget.classList.remove('tahnu'),
+  },
+    el('div', { class: 'nazev', text: b.nazev }),
+    el('div', { class: 'meta' },
+      b.projekt ? el('span', { class: 'tag', text: b.projekt }) : null,
+      el('span', { text: '#' + b.id }),
+      b.resi ? el('span', { text: '🔧 ' + jmeno(b.resi) }) : el('span', { text: '✍ ' + jmeno(b.nahlasil) }),
+      b.screenshoty?.length ? el('span', { text: '🖼 ' + b.screenshoty.length, title: 'Screenshoty' }) : null,
+      el('span', { text: datum(b.stav === 'vyreseno' && b.vyreseno_at ? b.vyreseno_at : b.created_at) }),
+      el('span', { class: 'sipky' },
+        i > 0 ? el('button', { type: 'button', text: '←', title: 'Posunout zpět', onclick: ev => posun(-1, ev) }) : null,
+        i < SLOUPCE.length - 1 ? el('button', { type: 'button', text: '→', title: 'Posunout dál', onclick: ev => posun(1, ev) }) : null,
+      ),
+    ),
+  );
+}
+
+// ── Přetahování ───────────────────────────────────────────
+function napojDrop(sloupecEl, karty, stav) {
+  let misto = null;
+  const kamPatri = y => [...karty.querySelectorAll('.karta:not(.tahnu)')]
+    .find(k => { const r = k.getBoundingClientRect(); return y < r.top + r.height / 2; }) || null;
+
+  sloupecEl.addEventListener('dragover', ev => {
+    ev.preventDefault();
+    sloupecEl.classList.add('nad');
+    if (stav === 'vyreseno') return; // vyřešené se řadí podle data, pořadí nejde měnit
+    misto ??= el('div', { class: 'misto' });
+    const pred = kamPatri(ev.clientY);
+    if (misto.nextSibling !== pred || misto.parentNode !== karty) karty.insertBefore(misto, pred);
+  });
+  sloupecEl.addEventListener('dragleave', ev => {
+    if (sloupecEl.contains(ev.relatedTarget)) return;
+    sloupecEl.classList.remove('nad');
+    misto?.remove();
+  });
+  sloupecEl.addEventListener('drop', ev => {
+    ev.preventDefault();
+    sloupecEl.classList.remove('nad');
+    const id = Number(ev.dataTransfer.getData('text/plain'));
+    if (!id) return;
+    const pred = misto?.nextElementSibling?.classList.contains('karta') ? misto.nextElementSibling : null;
+    const za = misto?.previousElementSibling?.classList.contains('karta') ? misto.previousElementSibling : null;
+    misto?.remove();
+    misto = null;
+    const p = id2 => bugy.get(Number(id2?.dataset.id))?.poradi;
+    let poradi;
+    if (stav === 'vyreseno') poradi = undefined;
+    else if (za && pred) poradi = (p(za) + p(pred)) / 2;
+    else if (pred) poradi = p(pred) - 1;
+    else if (za) poradi = p(za) + 1;
+    presun(id, stav, poradi);
+  });
+}
+
+// ── Zápis do databáze ─────────────────────────────────────
+function nahoru(stav) {
+  const v = [...bugy.values()].filter(b => b.stav === stav).map(b => b.poradi);
+  return v.length ? Math.min(...v) - 1 : 0;
+}
+
+async function zalozBug(pole) {
+  const r = await dotaz(sb.from('bugs').insert({
+    priorita: 2, projekt: $('#fProjekt').value, ...pole, stav: 'nahlaseno', poradi: nahoru('nahlaseno'),
+  }).select().single());
+  bugy.set(r.id, r);
+  vykresli();
+  return r;
+}
+
+async function uloz(id, zmeny) {
+  const b = bugy.get(id);
+  const puvodni = { ...b };
+  Object.assign(b, zmeny);  // hned ukázat, databáze to potvrdí
+  vykresli();
+  try {
+    const r = await dotaz(sb.from('bugs').update(zmeny).eq('id', id).select().single());
+    bugy.set(id, r);
+    vykresli();
+    return r;
+  } catch (e) {
+    bugy.set(id, puvodni);
+    vykresli();
+    throw e;
+  }
+}
+
+function presun(id, stav, poradi) {
+  const b = bugy.get(id);
+  if (!b) return;
+  const zmeny = { stav };
+  if (poradi !== undefined) zmeny.poradi = poradi;
+  else if (b.stav !== stav) zmeny.poradi = nahoru(stav);
+  if (stav === 'resi_se' && !b.resi) zmeny.resi = ja;   // kdo to vzal, ten to řeší
+  if (b.stav === stav && zmeny.poradi === undefined) return;
+  uloz(id, zmeny).catch(chyba);
+}
+
+// ── Detail ────────────────────────────────────────────────
+const dlg = $('#detail');
+dlg.addEventListener('close', () => { otevreny = null; });
+
+function otevriDetail(id) {
+  otevreny = id;
+  vyplnDetail(bugy.get(id));
+  dlg.showModal();
+}
+
+function vyplnDetail(b, zvenku = false) {
+  const f = dlg.firstElementChild;
+  // Bratr upravil bug, který mám otevřený: přepsat jen pole, ve kterých zrovna nepíšu.
+  if (zvenku) {
+    for (const k of ['nazev', 'popis', 'reseni', 'projekt', 'priorita', 'stav', 'resi']) {
+      const pole = f.elements[k];
+      if (pole && pole !== document.activeElement) pole.value = b[k] ?? '';
+    }
+    vykresliObrazky(b);
+    $('.kdy', f).textContent = popisKdy(b);
+    return;
+  }
+  // Hodnota se bere hned při psaní (ne až po odpočtu) a každé pole má vlastní
+  // odpočet — jinak by rychlé přepnutí na jiný bug nebo jiné pole změnu ztratilo
+  // nebo ji uložilo ke špatnému bugu.
+  const casovace = {};
+  const stavUlozeni = el('span', { class: 'ulozeno' });
+  const zmena = (pole, okamzite) => ev => {
+    let v = ev.target.value;
+    if (pole === 'priorita') v = Number(v);
+    if (pole === 'resi') v = v || null;
+    clearTimeout(casovace[pole]);
+    stavUlozeni.textContent = '';
+    casovace[pole] = setTimeout(async () => {
+      if (pole === 'nazev' && !v.trim()) return;
+      try {
+        const zmeny = { [pole]: v };
+        if (pole === 'stav') {
+          zmeny.poradi = nahoru(v);
+          if (v === 'resi_se' && !bugy.get(b.id).resi) zmeny.resi = ja;
+        }
+        const r = await uloz(b.id, zmeny);
+        if (otevreny === b.id && zmeny.resi) f.elements.resi.value = r.resi;
+        stavUlozeni.textContent = 'Uloženo ✓';
+      } catch (e) { chyba(e); }
+    }, okamzite ? 0 : 600);
+  };
+  const lidiVolby = [el('option', { value: '', text: '— nikdo —' }),
+    ...[...lide].map(([id, j]) => el('option', { value: id, text: j }))];
+
+  f.replaceChildren(
+    el('input', { class: 'nazev-in', name: 'nazev', value: b.nazev, maxlength: 200, oninput: zmena('nazev') }),
+    el('div', { class: 'radek' },
+      el('label', {}, 'Stav', el('select', { name: 'stav', onchange: zmena('stav', true) },
+        SLOUPCE.map(s => el('option', { value: s.stav, text: s.nazev })))),
+      el('label', {}, 'Priorita', el('select', { name: 'priorita', onchange: zmena('priorita', true) },
+        Object.entries(PRIORITY).map(([v, t]) => el('option', { value: v, text: t })))),
+      el('label', {}, 'Projekt', el('input', { name: 'projekt', list: 'projekty', value: b.projekt, oninput: zmena('projekt') })),
+      el('label', {}, 'Řeší', el('select', { name: 'resi', onchange: zmena('resi', true) }, lidiVolby)),
+    ),
+    el('label', {}, 'Popis (co se stalo, jak to zopakovat)',
+      el('textarea', { name: 'popis', value: b.popis, oninput: zmena('popis') })),
+    el('label', {}, 'Řešení (jak se to opravilo, commit)',
+      el('textarea', { name: 'reseni', value: b.reseni, oninput: zmena('reseni'), style: 'min-height:60px' })),
+    el('label', {}, 'Screenshoty — vlož přes Ctrl+V, přetáhni sem, nebo klikni', el('div', { class: 'obrazky' })),
+    el('div', { class: 'paticka' },
+      el('span', { class: 'kdy', text: popisKdy(b) }),
+      stavUlozeni,
+      el('span', {},
+        el('button', { type: 'button', class: 'btn danger', text: 'Smazat', onclick: () => smaz(b.id) }), ' ',
+        el('button', { class: 'btn primary', text: 'Hotovo' })),
+    ),
+  );
+  f.elements.stav.value = b.stav;
+  f.elements.priorita.value = b.priorita;
+  f.elements.resi.value = b.resi || '';
+  vykresliObrazky(b);
+}
+
+function popisKdy(b) {
+  let t = `#${b.id} · nahlásil ${jmeno(b.nahlasil)} ${datum(b.created_at)}`;
+  if (b.vyreseno_at) t += ` · vyřešeno ${datum(b.vyreseno_at)}`;
+  return t;
+}
+
+async function smaz(id) {
+  if (!confirm('Opravdu smazat tenhle bug? Nedá se to vrátit.')) return;
+  const b = bugy.get(id);
+  try {
+    await dotaz(sb.from('bugs').delete().eq('id', id));
+    if (b.screenshoty.length) await sb.storage.from('screenshoty').remove(b.screenshoty);
+    bugy.delete(id);
+    dlg.close();
+    vykresli();
+  } catch (e) { chyba(e); }
+}
+
+// ── Screenshoty ───────────────────────────────────────────
+const odkazy = new Map(); // cesta → podepsaná URL (platí hodinu)
+
+async function vykresliObrazky(b) {
+  const box = $('.obrazky', dlg);
+  if (!box) return;
+  const chybi = b.screenshoty.filter(c => !odkazy.has(c));
+  if (chybi.length) {
+    const { data } = await sb.storage.from('screenshoty').createSignedUrls(chybi, 3600);
+    (data || []).forEach(d => d.signedUrl && odkazy.set(d.path, d.signedUrl));
+  }
+  const vyber = el('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true,
+    onchange: ev => nahraj(b.id, [...ev.target.files]) });
+  box.replaceChildren(
+    ...b.screenshoty.map(c => el('div', { class: 'obrazek' },
+      el('img', { src: odkazy.get(c) || '', alt: '', onclick: () => ukaz(odkazy.get(c)) }),
+      el('button', { type: 'button', text: '✕', title: 'Odebrat', onclick: () => odeber(b.id, c) }))),
+    el('button', { type: 'button', class: 'vlozit', text: '+ obrázek', onclick: () => vyber.click() }),
+    vyber,
+  );
+}
+
+async function nahraj(id, soubory) {
+  const obrazky = soubory.filter(s => s.type.startsWith('image/'));
+  if (!obrazky.length) return;
+  try {
+    const cesty = [];
+    for (const s of obrazky) {
+      const pripona = (s.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+      const cesta = `${id}/${crypto.randomUUID()}.${pripona}`;
+      await dotaz(sb.storage.from('screenshoty').upload(cesta, s, { contentType: s.type }));
+      cesty.push(cesta);
+    }
+    const r = await uloz(id, { screenshoty: [...bugy.get(id).screenshoty, ...cesty] });
+    vykresliObrazky(r);
+  } catch (e) { chyba(e); }
+}
+
+async function odeber(id, cesta) {
+  if (!confirm('Odebrat obrázek?')) return;
+  try {
+    const r = await uloz(id, { screenshoty: bugy.get(id).screenshoty.filter(c => c !== cesta) });
+    await sb.storage.from('screenshoty').remove([cesta]);
+    vykresliObrazky(r);
+  } catch (e) { chyba(e); }
+}
+
+function ukaz(url) {
+  if (!url) return;
+  $('#nahled img').src = url;
+  $('#nahled').showModal();
+}
+$('#nahled').addEventListener('click', () => $('#nahled').close());
+
+dlg.addEventListener('paste', ev => {
+  const soubory = [...ev.clipboardData.files];
+  if (soubory.length && otevreny) { ev.preventDefault(); nahraj(otevreny, soubory); }
+});
+dlg.addEventListener('dragover', ev => ev.preventDefault());
+dlg.addEventListener('drop', ev => {
+  if (!ev.dataTransfer.files.length || !otevreny) return;
+  ev.preventDefault();
+  nahraj(otevreny, [...ev.dataTransfer.files]);
+});
+dlg.addEventListener('click', ev => { if (ev.target === dlg) dlg.close(); }); // klik vedle = zavřít
+
+// Ctrl+V se screenshotem kdekoli na nástěnce = nový bug s obrázkem.
+document.addEventListener('paste', async ev => {
+  if (dlg.open || $('#app').hidden || ev.target.closest?.('input, textarea')) return;
+  const soubory = [...ev.clipboardData.files].filter(s => s.type.startsWith('image/'));
+  if (!soubory.length) return;
+  ev.preventDefault();
+  try {
+    const b = await zalozBug({ nazev: 'Nový bug (ze screenshotu)' });
+    otevriDetail(b.id);
+    await nahraj(b.id, soubory);
+    dlg.firstElementChild.elements.nazev.select();
+  } catch (e) { chyba(e); }
+});
+
+// ── Lišta ─────────────────────────────────────────────────
+$('#novy').addEventListener('click', async () => {
+  try {
+    const b = await zalozBug({ nazev: 'Nový bug' });
+    otevriDetail(b.id);
+    dlg.firstElementChild.elements.nazev.select();
+  } catch (e) { chyba(e); }
+});
+for (const id of ['#fProjekt', '#fPriorita', '#fMoje'])
+  $(id).addEventListener('change', () => { ulozFiltry(); vykresli(); });
+$('#hledat').addEventListener('input', vykresli);
+
+$('#mojeJmeno').addEventListener('click', async () => {
+  const nove = prompt('Jak se má tvoje jméno ukazovat na kartách?', jmeno(ja));
+  if (!nove?.trim()) return;
+  try {
+    await dotaz(sb.from('lide').update({ jmeno: nove.trim() }).eq('id', ja));
+    lide.set(ja, nove.trim());
+    $('#mojeJmeno').textContent = nove.trim();
+    vykresli();
+  } catch (e) { chyba(e); }
+});
+
+document.addEventListener('keydown', ev => {
+  if (dlg.open || ev.target.closest('input, textarea, select') || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (ev.key === '/') { ev.preventDefault(); $('#hledat').focus(); }
+  if (ev.key === 'n') { ev.preventDefault(); $('.rychly input')?.focus(); }
+});
+</script>
+</body>
+</html>
