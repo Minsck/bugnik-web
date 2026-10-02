@@ -267,6 +267,15 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
 .udalost .co { font-weight: 600; word-break: break-word; }
 .udalost .kdy { font-size: 12px; color: var(--muted); }
 .udalost.pryc .co { text-decoration: line-through; color: var(--muted); }
+#filtry { width: min(520px, calc(100% - 32px)); }
+#filtry .mrizka { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#filtry label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+#filtry select { font-size: 14px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text); }
+#filtry .akce { display: flex; justify-content: flex-end; }
+@media (max-width: 500px) { #filtry .mrizka { grid-template-columns: 1fr; } }
+#filtryBtn { display: inline-flex; gap: 6px; align-items: center; }
+#filtryBtn.aktivni { border-color: var(--accent); color: var(--accent); }
+.pocet-f { background: var(--accent); color: #000; border-radius: 99px; min-width: 18px; padding: 0 5px; font-size: 11px; font-weight: 700; text-align: center; }
 #nastaveni { width: min(560px, calc(100% - 32px)); }
 #nastaveni label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
 #nastaveni label.chk { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--text); }
@@ -329,23 +338,7 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
     <span class="logo">🐞 Bugník</span>
     <div class="filtry">
       <input type="search" id="hledat" placeholder="Hledat… ( / )">
-      <select id="fProjekt"><option value="">Všechny projekty</option></select>
-      <select id="fTyp">
-        <option value="">Bugy i úkoly</option>
-        <option value="bug">🐞 Jen bugy</option>
-        <option value="ukol">📋 Jen úkoly</option>
-      </select>
-      <select id="fPriorita">
-        <option value="">Každá priorita</option>
-        <option value="1">🔴 Vysoká</option>
-        <option value="2">🟠 Střední</option>
-        <option value="3">⚪ Nízká</option>
-      </select>
-      <select id="fVrstva" title="Část aplikace Čundr">
-        <option value="">Každá vrstva</option>
-      </select>
-      <select id="fResi"><option value="">Řeší kdokoli</option></select>
-      <select id="fNahlasil"><option value="">Nahlásil kdokoli</option></select>
+      <button class="btn" id="filtryBtn" title="Filtry (f)"><svg class="ik-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .55.9l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .52-1.34L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.74 1.67l7.22 7.99A2 2 0 0 1 10 14z"/></svg> Filtry<span class="pocet-f" hidden></span></button>
       <button class="btn primary" id="novy" title="Nový bug (n)">+ Nový</button>
     </div>
     <div class="ja">
@@ -367,6 +360,41 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
   <div class="udalosti"></div>
 </div></dialog>
 <dialog id="nastaveni"><form class="panel"></form></dialog>
+<dialog id="filtry"><form class="panel" method="dialog">
+  <h3>Filtry <button type="button" class="btn" id="filtryVymazat">Zrušit všechny</button></h3>
+  <div class="mrizka">
+    <label><span>Projekt</span>
+  <select id="fProjekt"><option value="">Všechny projekty</option></select>
+    </label>
+    <label><span>Typ</span>
+  <select id="fTyp">
+        <option value="">Bugy i úkoly</option>
+        <option value="bug">🐞 Jen bugy</option>
+        <option value="ukol">📋 Jen úkoly</option>
+      </select>
+    </label>
+    <label><span>Priorita</span>
+  <select id="fPriorita">
+        <option value="">Každá priorita</option>
+        <option value="1">🔴 Vysoká</option>
+        <option value="2">🟠 Střední</option>
+        <option value="3">⚪ Nízká</option>
+      </select>
+    </label>
+    <label><span>Vrstva v aplikaci Čundr</span>
+  <select id="fVrstva" title="Část aplikace Čundr">
+        <option value="">Každá vrstva</option>
+      </select>
+    </label>
+    <label><span>Kdo řeší</span>
+  <select id="fResi"><option value="">Řeší kdokoli</option></select>
+    </label>
+    <label><span>Kdo nahlásil</span>
+  <select id="fNahlasil"><option value="">Nahlásil kdokoli</option></select>
+    </label>
+  </div>
+  <div class="akce"><button class="btn primary">Hotovo</button></div>
+</form></dialog>
 
 <datalist id="projekty"></datalist>
 
@@ -643,12 +671,13 @@ function otevriZOdkazu() {
 
 function vykresliTaby() {
   const p = $('#fProjekt').value;
-  $('#fVrstva').hidden = !!p && p !== PROJEKT_S_VRSTVAMI;   // před počty — filtr vrstvy platí jen viditelný
+  $('#fVrstva').parentElement.hidden = !!p && p !== PROJEKT_S_VRSTVAMI;   // před počty — filtr vrstvy platí jen viditelný
   const pocty = {};
   for (const b of bugy.values()) if (prosloFiltrem(b, $('#fTyp').value)) pocty[b.stav] = (pocty[b.stav] || 0) + 1;
   // U Úkolů jen nevyřešené — kolik jich ještě zbývá.
   pocty.ukoly = [...bugy.values()].filter(b => b.stav !== 'vyreseno' && prosloFiltrem(b, 'ukol')).length;
-  $('#fTyp').hidden = tab === 'ukoly';
+  $('#fTyp').parentElement.hidden = tab === 'ukoly';
+  ukazPocetFiltru();
   $('nav.taby').replaceChildren(...TABY.map(t => el('button', {
     type: 'button', class: t.id === tab ? 'aktivni' : null, onclick: () => prepniTab(t.id),
   }, ikona(t.id), t.nazev, t.id !== 'prehled' ? el('span', { class: 'n', text: ` (${pocty[t.id] || 0})` }) : null)));
@@ -664,7 +693,7 @@ function prosloFiltrem(b, t = typFiltru()) {
   if (t && (b.typ || 'bug') !== t) return false;
   if (r && String(b.priorita) !== r) return false;
   const v = $('#fVrstva').value, re = $('#fResi').value, n = $('#fNahlasil').value;
-  if (v && !$('#fVrstva').hidden && (b.vrstva || '') !== (v === NIKDO ? '' : v)) return false;
+  if (v && !$('#fVrstva').parentElement.hidden && (b.vrstva || '') !== (v === NIKDO ? '' : v)) return false;
   if (re && (re === NIKDO ? !!b.resi : b.resi !== re)) return false;
   if (n && b.nahlasil !== n) return false;
   const q = $('#hledat').value.trim().toLowerCase();
@@ -1241,7 +1270,7 @@ function obrazkyZeSchranky(data) {
 // Jeden handler pro celou stránku: když je otevřený bug (nebo nový), obrázek
 // jde do něj — ať je fokus kdekoli. Jinak se založí nový záznam s obrázkem.
 document.addEventListener('paste', ev => {
-  if ($('#app').hidden || document.querySelector('#nahled[open], #oznameni[open], #nastaveni[open]')) return;
+  if ($('#app').hidden || document.querySelector('#nahled[open], #oznameni[open], #nastaveni[open], #filtry[open]')) return;
   const soubory = obrazkyZeSchranky(ev.clipboardData);
   if (!soubory.length) return;
   ev.preventDefault();
@@ -1256,6 +1285,23 @@ dlg.addEventListener('drop', ev => {
 });
 
 // ── Lišta ─────────────────────────────────────────────────
+// Kolik filtrů z okna Filtry teď platí (skryté — typ v Úkolech, vrstva mimo Čundr — se nepočítají).
+function ukazPocetFiltru() {
+  const aktivni = [...document.querySelectorAll('#filtry select')].filter(s => s.value && !s.parentElement.hidden);
+  const o = $('#filtryBtn .pocet-f');
+  o.hidden = !aktivni.length;
+  o.textContent = aktivni.length;
+  $('#filtryBtn').classList.toggle('aktivni', aktivni.length > 0);
+  $('#filtryBtn').title = aktivni.length
+    ? 'Filtry (f): ' + aktivni.map(s => s.selectedOptions[0].text).join(', ') : 'Filtry (f)';
+}
+$('#filtryBtn').addEventListener('click', () => $('#filtry').showModal());
+$('#filtry').addEventListener('click', ev => { if (ev.target === ev.currentTarget) $('#filtry').close(); });
+$('#filtryVymazat').addEventListener('click', () => {
+  document.querySelectorAll('#filtry select').forEach(s => { s.value = ''; });
+  ulozFiltry();
+  vykresli();
+});
 $('#novy').addEventListener('click', () => otevriNovy());
 for (const id of ['#fProjekt', '#fTyp', '#fPriorita', '#fVrstva', '#fResi', '#fNahlasil'])
   $(id).addEventListener('change', () => { ulozFiltry(); vykresli(); });
@@ -1468,6 +1514,7 @@ document.addEventListener('keydown', ev => {
   if (document.querySelector('dialog[open]') || ev.target.closest('input, textarea, select') || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   if (ev.key === '/') { ev.preventDefault(); $('#hledat').focus(); }
   if (ev.key === 'n') { ev.preventDefault(); otevriNovy(); }
+  if (ev.key === 'f') { ev.preventDefault(); $('#filtry').showModal(); }
 });
 </script>
 </body>
