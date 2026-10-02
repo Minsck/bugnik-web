@@ -252,8 +252,59 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
   display: grid; place-items: center; color: var(--muted); font-size: 12px; text-align: center;
   background: none;
 }
-#nahled { width: auto; max-width: 95vw; background: none; box-shadow: none; }
-#nahled img { max-width: 95vw; max-height: 90vh; display: block; border-radius: 8px; }
+/* Galerie: všechny obrázky bugu vedle sebe, vodorovný posuvník, každý jde přiblížit zvlášť. */
+#nahled {
+  width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; margin: 0;
+  background: rgb(0 0 0 / .92); box-shadow: none; border-radius: 0; overflow: hidden;
+}
+#nahled::backdrop { background: rgb(0 0 0 / .6); }
+#nahled .pas {
+  display: flex; height: 100%; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scrollbar-color: var(--muted) transparent;
+}
+#nahled .snimek {
+  flex: 0 0 100%; height: 100%; scroll-snap-align: center; overflow: auto;
+  display: grid; place-items: center; padding: 56px 16px var(--dole, 24px);
+}
+#nahled.vic { --dole: 104px; }
+#nahled .snimek img {
+  max-width: calc(100vw - 32px); max-height: calc(100vh - 56px - var(--dole, 24px));
+  display: block; border-radius: 6px; cursor: zoom-in;
+}
+#nahled .snimek:not(.zoom) { overflow: hidden; }
+#nahled .snimek.zoom { place-items: start; padding: 0 0 var(--dole, 0); }  /* spodek obrázku vyjede nad miniatury */
+#nahled .snimek.zoom img { max-width: none; max-height: none; cursor: zoom-out; border-radius: 0; }
+#nahled .horni {
+  position: absolute; top: 0; left: 0; right: 0; height: 48px; padding: 0 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #fff;
+  background: linear-gradient(rgb(0 0 0 / .7), transparent); pointer-events: none;
+}
+#nahled .horni > * { pointer-events: auto; }
+#nahled .pocitadlo { font-weight: 700; }
+#nahled .napoveda { color: var(--muted); font-size: 12px; margin-right: auto; margin-left: 12px; }
+#nahled .sipka {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 64px;
+  border: none; border-radius: 8px; background: rgb(0 0 0 / .55); color: #fff; font-size: 26px;
+}
+#nahled .sipka:hover { background: rgb(0 0 0 / .8); }
+#nahled .sipka:disabled { opacity: .25; cursor: default; }
+#nahled .sipka.vlevo { left: 8px; } #nahled .sipka.vpravo { right: 8px; }
+/* Miniatury všech obrázků dole — je vidět, kolik jich je, a klikem se skočí na libovolný. */
+#nahled .miniatury {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 88px; padding: 10px 12px;
+  display: flex; gap: 8px; justify-content: safe center; overflow-x: auto;
+  background: linear-gradient(transparent, rgb(0 0 0 / .8) 35%);
+}
+#nahled .miniatury button {
+  flex: none; padding: 0; border: 2px solid transparent; border-radius: 6px; background: var(--panel);
+  opacity: .55; height: 64px;
+}
+#nahled .miniatury button:hover { opacity: .85; }
+#nahled .miniatury button.ted { opacity: 1; border-color: var(--accent); }
+#nahled .miniatury img { height: 100%; max-width: 120px; object-fit: cover; display: block; border-radius: 4px; }
+#nahled .zavrit-x { background: rgb(0 0 0 / .55); color: #fff; border: 1px solid var(--line); }
+.karta .obr-odkaz { border: none; background: none; padding: 0 2px; color: inherit; font-size: 12px; border-radius: 4px; }
+.karta .obr-odkaz:hover { background: var(--panel); color: var(--text); }
 
 /* ── Oznámení a nastavení ───────────────────────────────── */
 .ikona-btn {
@@ -369,7 +420,17 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
 </section>
 
 <dialog id="detail"><form class="detail"></form></dialog>
-<dialog id="nahled"><img alt=""></dialog>
+<dialog id="nahled" aria-label="Obrázky">
+  <div class="pas"></div>
+  <div class="horni">
+    <span class="pocitadlo"></span>
+    <span class="napoveda">klik = přiblížit · ←/→ další · Esc zavřít</span>
+    <button type="button" class="btn zavrit-x">Zavřít ✕</button>
+  </div>
+  <div class="miniatury"></div>
+  <button type="button" class="sipka vlevo" aria-label="Předchozí">‹</button>
+  <button type="button" class="sipka vpravo" aria-label="Další">›</button>
+</dialog>
 <dialog id="oznameni"><div class="panel">
   <h3>🔔 Oznámení <button type="button" class="btn" data-zavrit>Zavřít</button></h3>
   <div class="udalosti"></div>
@@ -797,7 +858,8 @@ function karta(b) {
       NAZEV_VRSTVY[b.vrstva] ? el('span', { class: 'tag vrstva', text: NAZEV_VRSTVY[b.vrstva] }) : null,
       el('span', { text: '#' + b.id }),
       b.resi ? el('span', { text: '🔧 ' + jmeno(b.resi) }) : el('span', { text: '✍ ' + jmeno(b.nahlasil) }),
-      b.screenshoty?.length ? el('span', { text: '🖼 ' + b.screenshoty.length, title: 'Screenshoty' }) : null,
+      b.screenshoty?.length ? el('button', { type: 'button', class: 'obr-odkaz', text: '🖼 ' + b.screenshoty.length,
+        title: 'Zobrazit obrázky', onclick: ev => { ev.stopPropagation(); galerie(b.screenshoty); } }) : null,
       el('span', { text: datum(b.stav === 'vyreseno' && b.vyreseno_at ? b.vyreseno_at : b.created_at) }),
       el('span', { class: 'sipky' },
         i > 0 ? el('button', { type: 'button', text: '←', title: 'Posunout zpět', onclick: ev => posun(-1, ev) }) : null,
@@ -911,7 +973,7 @@ function radekTabulky(b, stav) {
     vyreseno_at: el('td', { class: 'maly', 'data-label': 'Vyřešeno', text: datum(b.vyreseno_at) }),
     obr: el('td', { class: 'obr' }, b.screenshoty.length ? el('div', { class: 'nahledy' },
       b.screenshoty.map(c => el('img', { alt: '', 'data-cesta': c, loading: 'lazy', src: odkaz(c) || null,
-        onclick: ev => { ev.stopPropagation(); ukaz(odkaz(c)); } }))) : null),
+        onclick: ev => { ev.stopPropagation(); galerie(b.screenshoty, b.screenshoty.indexOf(c)); } }))) : null),
   };
   return el('tr', { 'data-id': b.id, 'data-p': b.priorita, onclick: () => otevriDetail(b.id) },
     el('td', { class: 'pruh' }),
@@ -1227,7 +1289,7 @@ async function vykresliObrazky(cesty) {
     onchange: ev => nahraj([...ev.target.files]) });
   box.replaceChildren(
     ...cesty.map(c => el('div', { class: 'obrazek' },
-      el('img', { src: odkaz(c) || '', alt: '', onclick: () => ukaz(odkaz(c)) }),
+      el('img', { src: odkaz(c) || '', alt: '', onclick: () => galerie(cesty, cesty.indexOf(c)) }),
       el('button', { type: 'button', text: '✕', title: 'Odebrat', onclick: () => odeber(c) }))),
     el('button', { type: 'button', class: 'vlozit', text: '+ obrázek', onclick: () => vyber.click() }),
     vyber,
@@ -1278,12 +1340,80 @@ async function odeber(cesta) {
   } catch (e) { chyba(e); }
 }
 
-function ukaz(url) {
-  if (!url) return;
-  $('#nahled img').src = url;
-  $('#nahled').showModal();
+// ── Galerie ───────────────────────────────────────────────
+const gal = $('#nahled');
+const pas = $('.pas', gal);
+const snimky = () => [...pas.children];
+const aktualni = () => Math.round(pas.scrollLeft / (pas.clientWidth || 1));
+
+async function galerie(cesty, od = 0) {
+  if (!cesty?.length) return;
+  await nactiOdkazy(cesty);   // odkazy mohly vypršet nebo se ještě nenačetly
+  pas.replaceChildren(...cesty.map(c => el('div', { class: 'snimek' },
+    el('img', { src: odkaz(c) || '', alt: '', draggable: false, onclick: priblizit }))));
+  const vic = cesty.length > 1;
+  gal.classList.toggle('vic', vic);
+  gal.querySelectorAll('.sipka').forEach(s => { s.hidden = !vic; });
+  const mini = $('.miniatury', gal);
+  mini.hidden = !vic;
+  mini.replaceChildren(...cesty.map((c, i) => el('button', { type: 'button', title: `Obrázek ${i + 1}`,
+    onclick: () => pas.scrollTo({ left: i * pas.clientWidth, behavior: 'smooth' }) },
+    el('img', { src: odkaz(c) || '', alt: '' }))));
+  $('.napoveda', gal).textContent = vic ? 'klik = přiblížit · ←/→ další · Esc zavřít' : 'klik = přiblížit · Esc zavřít';
+  if (!gal.open) gal.showModal();
+  pas.scrollLeft = od * pas.clientWidth;
+  ukazPocitadlo();
 }
-$('#nahled').addEventListener('click', () => $('#nahled').close());
+
+// Přiblížení jednoho snímku: obrázek v plné velikosti (aspoň 2× víc než na obrazovce),
+// snímek se posune tak, aby místo kliknutí zůstalo pod kurzorem.
+function priblizit(ev) {
+  const img = ev.currentTarget, snimek = img.parentElement;
+  if (snimek.classList.toggle('zoom')) {
+    const r = img.getBoundingClientRect();
+    const fx = (ev.clientX - r.left) / r.width, fy = (ev.clientY - r.top) / r.height;
+    const sirka = Math.max(img.naturalWidth, r.width * 2);
+    img.style.width = sirka + 'px';
+    snimek.scrollLeft = fx * img.offsetWidth - (ev.clientX - snimek.getBoundingClientRect().left);
+    snimek.scrollTop = fy * img.offsetHeight - (ev.clientY - snimek.getBoundingClientRect().top);
+  } else {
+    img.style.width = '';
+  }
+}
+
+function ukazPocitadlo() {
+  const n = snimky().length, i = Math.min(aktualni(), n - 1);
+  $('.pocitadlo', gal).textContent = n > 1 ? `${i + 1} / ${n}` : '';
+  $('.sipka.vlevo', gal).disabled = i <= 0;
+  $('.sipka.vpravo', gal).disabled = i >= n - 1;
+  [...$('.miniatury', gal).children].forEach((m, j) => m.classList.toggle('ted', j === i));
+}
+function posunGalerii(smer) {
+  const i = Math.max(0, Math.min(snimky().length - 1, aktualni() + smer));
+  pas.scrollTo({ left: i * pas.clientWidth, behavior: 'smooth' });
+}
+pas.addEventListener('scroll', ukazPocitadlo, { passive: true });
+$('.sipka.vlevo', gal).addEventListener('click', () => posunGalerii(-1));
+$('.sipka.vpravo', gal).addEventListener('click', () => posunGalerii(1));
+$('.zavrit-x', gal).addEventListener('click', () => gal.close());
+// Klik do prázdna vedle obrázku zavře (ne klik na obrázek, šipky ani lištu).
+pas.addEventListener('click', ev => { if (ev.target.classList.contains('snimek') && !ev.target.classList.contains('zoom')) gal.close(); });
+gal.addEventListener('keydown', ev => {
+  if (ev.key === 'ArrowLeft') { ev.preventDefault(); posunGalerii(-1); }
+  if (ev.key === 'ArrowRight') { ev.preventDefault(); posunGalerii(1); }
+});
+// Kolečko myši: na nepřiblíženém snímku listuje (svislé kolečko by jinak nedělalo nic),
+// na přiblíženém posouvá obrázek jako obvykle.
+let posledniKolecko = 0;
+pas.addEventListener('wheel', ev => {
+  if (ev.target.closest('.snimek.zoom') || Math.abs(ev.deltaY) < Math.abs(ev.deltaX)) return;
+  ev.preventDefault();
+  if (Date.now() - posledniKolecko < 350) return;
+  posledniKolecko = Date.now();
+  posunGalerii(Math.sign(ev.deltaY));
+}, { passive: false });
+// Zpátky z přiblížení při přechodu na jiný snímek nebo zavření.
+gal.addEventListener('close', () => pas.replaceChildren());
 
 // Obrázky ze schránky: Win+Shift+S je dá do `files`, „Kopírovat obrázek"
 // z prohlížeče někdy jen do `items` — bereme obojí.
