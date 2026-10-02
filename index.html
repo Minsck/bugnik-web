@@ -58,7 +58,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 header {
   position: sticky; top: 0; z-index: 5; background: var(--bg);
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  padding: 12px 16px; border-bottom: 1px solid var(--line);
+  padding: 12px 16px 0; border-bottom: 1px solid var(--line);
 }
 header .logo { font-weight: 700; font-size: 18px; margin-right: 8px; }
 header .filtry { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; align-items: center; }
@@ -71,8 +71,17 @@ header label.chk input { width: auto; }
 .spojeni { width: 9px; height: 9px; border-radius: 50%; background: var(--p3); }
 .spojeni.ok { background: var(--ok); }
 
-/* ── Nástěnka ───────────────────────────────────────────── */
-main {
+nav.taby { flex: 1 1 100%; display: flex; gap: 2px; overflow-x: auto; margin-top: 4px; }
+nav.taby button {
+  border: none; background: none; padding: 8px 14px; color: var(--muted); white-space: nowrap;
+  border-bottom: 2px solid transparent; font-weight: 600;
+}
+nav.taby button:hover { color: var(--text); }
+nav.taby button.aktivni { color: var(--accent); border-bottom-color: var(--accent); }
+nav.taby .n { font-weight: 400; opacity: .8; }
+
+/* ── Přehled (kanban) ───────────────────────────────────── */
+main.kanban {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
   padding: 16px; align-items: start;
 }
@@ -99,7 +108,7 @@ main {
 .karta[data-p="2"] { border-left-color: var(--p2); }
 .karta:hover { outline: 1px solid var(--line); }
 .karta.tahnu { opacity: .4; }
-.karta.blik { background: var(--flash); transition: none; }
+.blik { background: var(--flash) !important; transition: none !important; }
 .karta .nazev { font-weight: 600; word-break: break-word; }
 .sloupec[data-stav="vyreseno"] .karta .nazev { text-decoration: line-through; color: var(--muted); }
 .karta .meta {
@@ -114,6 +123,37 @@ main {
 .karta .sipky button:hover { background: var(--panel); color: var(--text); }
 .misto { height: 3px; background: var(--accent); border-radius: 2px; }
 
+/* ── Tabulka (taby se stavem) ───────────────────────────── */
+main.tabulka { padding: 16px; }
+.prazdno { color: var(--muted); padding: 40px 0; text-align: center; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+th, td { text-align: left; padding: 10px 12px; vertical-align: top; border-bottom: 1px solid var(--line); }
+th {
+  font-size: 12px; color: var(--muted); font-weight: 600; background: var(--panel);
+  cursor: pointer; user-select: none; white-space: nowrap;
+}
+th:hover { color: var(--text); }
+th .smer { color: var(--accent); }
+tbody tr { cursor: pointer; transition: background .6s; }
+tbody tr:hover { background: var(--bg); }
+tbody tr:last-child td { border-bottom: none; }
+th.pruh, td.pruh { padding: 0; width: 4px; min-width: 4px; }
+td.pruh { background: var(--p3); }
+tr[data-p="1"] td.pruh { background: var(--p1); }
+tr[data-p="2"] td.pruh { background: var(--p2); }
+td .nazev { font-weight: 600; word-break: break-word; }
+td .popis, td .reseni {
+  color: var(--muted); font-size: 13px; margin-top: 2px; white-space: pre-line;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+td .reseni { color: var(--ok); }
+td.maly { white-space: nowrap; color: var(--muted); font-size: 13px; }
+.nahledy { display: flex; flex-wrap: wrap; gap: 6px; }
+.nahledy img {
+  width: 72px; height: 54px; object-fit: cover; border-radius: 6px;
+  border: 1px solid var(--line); cursor: zoom-in; background: var(--panel);
+}
+
 /* ── Detail bugu ────────────────────────────────────────── */
 dialog {
   border: none; border-radius: 12px; padding: 0; width: min(640px, calc(100% - 32px));
@@ -121,6 +161,7 @@ dialog {
 }
 dialog::backdrop { background: rgb(0 0 0 / .4); }
 .detail { padding: 18px; display: grid; gap: 12px; }
+.detail h3 { margin: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .detail .nazev-in { font-size: 18px; font-weight: 600; }
 .detail .radek { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
 .detail label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
@@ -134,7 +175,7 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
 .obrazek { position: relative; }
 .obrazek img {
   height: 90px; max-width: 160px; object-fit: cover; border-radius: 6px;
-  border: 1px solid var(--line); cursor: zoom-in; display: block;
+  border: 1px solid var(--line); cursor: zoom-in; display: block; min-width: 60px; background: var(--panel);
 }
 .obrazek button {
   position: absolute; top: 2px; right: 2px; border: none; border-radius: 50%;
@@ -149,13 +190,29 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
 #nahled img { max-width: 95vw; max-height: 90vh; display: block; border-radius: 8px; }
 
 @media (max-width: 800px) {
-  main { grid-template-columns: minmax(0, 1fr); }
+  main.kanban { grid-template-columns: minmax(0, 1fr); }
   /* Logo a „já" na prvním řádku, filtry pod nimi přes celou šířku. */
   header .ja { margin-left: auto; }
   header .filtry { order: 3; flex: 1 1 100%; }
+  header nav.taby { order: 4; }
   header .filtry input[type=search] { max-width: none; flex: 1 1 100%; }
   header .filtry select { flex: 1 1 0; min-width: 0; }
   #novy { margin-left: auto; }
+
+  /* Tabulka → karty pod sebou, popisky sloupců z data-label. */
+  table, tbody, tr, td { display: block; }
+  thead { display: none; }
+  table { background: none; box-shadow: none; }
+  tbody tr {
+    background: var(--card); border-radius: 8px; margin-bottom: 8px; box-shadow: var(--shadow);
+    border-left: 4px solid var(--p3); display: flex; flex-wrap: wrap; padding: 6px 4px;
+  }
+  tbody tr[data-p="1"] { border-left-color: var(--p1); }
+  tbody tr[data-p="2"] { border-left-color: var(--p2); }
+  td { border: none; padding: 4px 8px; }
+  td.pruh, td.typ, td.cislo { display: none; }
+  td.hlavni, td.obr { flex: 1 1 100%; }
+  td.maly[data-label]::before { content: attr(data-label) ": "; }
 }
 </style>
 </head>
@@ -177,6 +234,11 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
     <div class="filtry">
       <input type="search" id="hledat" placeholder="Hledat… ( / )">
       <select id="fProjekt"><option value="">Všechny projekty</option></select>
+      <select id="fTyp">
+        <option value="">Bugy i úkoly</option>
+        <option value="bug">🐞 Jen bugy</option>
+        <option value="ukol">📋 Jen úkoly</option>
+      </select>
       <select id="fPriorita">
         <option value="">Každá priorita</option>
         <option value="1">🔴 Vysoká</option>
@@ -184,18 +246,19 @@ dialog::backdrop { background: rgb(0 0 0 / .4); }
         <option value="3">⚪ Nízká</option>
       </select>
       <label class="chk"><input type="checkbox" id="fMoje"> Jen moje</label>
-      <button class="btn primary" id="novy">+ Nový bug</button>
+      <button class="btn primary" id="novy" title="Nový bug (n)">+ Nový</button>
     </div>
     <div class="ja">
       <span class="spojeni" title="Živé spojení"></span>
       <b id="mojeJmeno" title="Změnit jméno"></b>
       <button class="btn" id="odhlasit">Odhlásit</button>
     </div>
+    <nav class="taby"></nav>
   </header>
   <main></main>
 </section>
 
-<dialog id="detail"><form method="dialog" class="detail"></form></dialog>
+<dialog id="detail"><form class="detail"></form></dialog>
 <dialog id="nahled"><img alt=""></dialog>
 
 <datalist id="projekty"></datalist>
@@ -210,8 +273,13 @@ const SLOUPCE = [
   { stav: 'resi_se',   nazev: 'Řeší se' },
   { stav: 'vyreseno',  nazev: 'Vyřešené' },
 ];
+const TABY = [{ id: 'prehled', nazev: 'Přehled' }, ...SLOUPCE.map(s => ({ id: s.stav, nazev: s.nazev }))];
 const PRIORITY = { 1: '🔴 Vysoká', 2: '🟠 Střední', 3: '⚪ Nízká' };
+const TYPY = { bug: '🐞 Bug', ukol: '📋 Úkol' };
+const IKONA = { bug: '🐞', ukol: '📋' };
 const ZAKLADNI_PROJEKTY = ['Čundr', 'DOKUL', 'Atlas', 'Moje Hra'];
+const VYCHOZI_PROJEKT = 'Čundr';
+const VYCHOZI_NAZEV = 'Nový bug';
 const VYRESENYCH_NAHLED = 30; // víc se ve sloupci Vyřešené ukáže až na klik
 
 if (!window.BUGNIK) {
@@ -225,7 +293,10 @@ let ja = null;                 // uuid přihlášeného
 const bugy = new Map();        // id → řádek
 const lide = new Map();        // id → jméno
 let vsechnyVyresene = false;
-let otevreny = null;           // id bugu v detailu
+let otevreny = null;           // id bugu v detailu, nebo 'novy' pro rozepsaný nový
+let koncept = null;            // rozepsaný nový bug (ještě není v databázi)
+let tab = 'prehled';
+const razeni = {};             // tab → { klic, smer }
 
 // ── Pomocníci ─────────────────────────────────────────────
 function el(tag, attrs = {}, ...deti) {
@@ -242,6 +313,7 @@ function el(tag, attrs = {}, ...deti) {
 }
 const jmeno = id => (id && lide.get(id)) || '—';
 function datum(iso) {
+  if (!iso) return '—';
   const d = new Date(iso);
   const dnes = new Date();
   const opt = d.getFullYear() === dnes.getFullYear()
@@ -257,20 +329,30 @@ async function dotaz(p) {
   if (error) throw error;
   return data;
 }
+// Je na bugu něco, o co by byla škoda přijít? Jen pak se ptáme před smazáním.
+function maObsah(b) {
+  const nazev = (b.nazev || '').trim();
+  return b.screenshoty?.length > 0 || !!(b.popis || '').trim() || (!!nazev && nazev !== VYCHOZI_NAZEV);
+}
+
+const KLIC_FILTRU = 'bugnik-filtry2'; // nový klíč → u všech se jednou nastaví výchozí Čundr
 function ulozFiltry() {
   try {
-    localStorage.setItem('bugnik-filtry', JSON.stringify({
-      p: $('#fProjekt').value, r: $('#fPriorita').value, m: $('#fMoje').checked,
+    localStorage.setItem(KLIC_FILTRU, JSON.stringify({
+      p: $('#fProjekt').value, t: $('#fTyp').value, r: $('#fPriorita').value, m: $('#fMoje').checked,
     }));
   } catch {}
 }
 function nactiFiltry() {
   try {
-    const f = JSON.parse(localStorage.getItem('bugnik-filtry') || '{}');
+    const ulozene = localStorage.getItem(KLIC_FILTRU);
+    if (!ulozene) return VYCHOZI_PROJEKT;
+    const f = JSON.parse(ulozene);
+    $('#fTyp').value = f.t || '';
     $('#fPriorita').value = f.r || '';
     $('#fMoje').checked = !!f.m;
-    return f.p || '';
-  } catch { return ''; }
+    return f.p ?? VYCHOZI_PROJEKT;
+  } catch { return VYCHOZI_PROJEKT; }
 }
 
 // ── Přihlášení ────────────────────────────────────────────
@@ -302,24 +384,24 @@ async function start() {
   b.forEach(r => bugy.set(r.id, r));
   $('#mojeJmeno').textContent = jmeno(ja);
   obnovProjekty(nactiFiltry());
+  tab = tabZOdkazu();
   vykresli();
 
   sb.channel('bugnik')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'bugs' }, zmena => {
       if (zmena.eventType === 'DELETE') {
         bugy.delete(zmena.old.id);
-        if (otevreny === zmena.old.id) $('#detail').close();
-      } else {
-        const r = zmena.new;
-        const cizi = r.upravil && r.upravil !== ja;
-        bugy.set(r.id, r);
-        if (cizi && otevreny === r.id) vyplnDetail(r, true);
-        obnovProjekty();
+        if (otevreny === zmena.old.id) dlg.close();
         vykresli();
-        if (cizi) blikni(r.id);
         return;
       }
+      const r = zmena.new;
+      const cizi = r.upravil && r.upravil !== ja;
+      bugy.set(r.id, r);
+      if (cizi && otevreny === r.id) vyplnDetail(r, true);
+      obnovProjekty();
       vykresli();
+      if (cizi) blikni(r.id);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'lide' }, zmena => {
       if (zmena.new?.id) lide.set(zmena.new.id, zmena.new.jmeno);
@@ -343,7 +425,7 @@ async function prenacti() {
 }
 
 function blikni(id) {
-  const k = document.querySelector(`.karta[data-id="${id}"]`);
+  const k = document.querySelector(`[data-id="${id}"]`);
   if (!k) return;
   k.classList.add('blik');
   setTimeout(() => k.classList.remove('blik'), 900);
@@ -361,10 +443,34 @@ function obnovProjekty(vybrat) {
   $('#projekty').replaceChildren(...serazene.map(p => el('option', { value: p })));
 }
 
-// ── Nástěnka ──────────────────────────────────────────────
+// ── Taby ──────────────────────────────────────────────────
+function tabZOdkazu() {
+  const h = location.hash.slice(1);
+  if (TABY.some(t => t.id === h)) return h;
+  try { return localStorage.getItem('bugnik-tab') || 'prehled'; } catch { return 'prehled'; }
+}
+function prepniTab(id) {
+  tab = id;
+  try { localStorage.setItem('bugnik-tab', id); } catch {}
+  history.replaceState(null, '', id === 'prehled' ? location.pathname : '#' + id);
+  vykresli();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', () => { if (spusteno) { tab = tabZOdkazu(); vykresli(); } });
+
+function vykresliTaby() {
+  const pocty = {};
+  for (const b of bugy.values()) if (prosloFiltrem(b)) pocty[b.stav] = (pocty[b.stav] || 0) + 1;
+  $('nav.taby').replaceChildren(...TABY.map(t => el('button', {
+    type: 'button', class: t.id === tab ? 'aktivni' : null, onclick: () => prepniTab(t.id),
+  }, t.nazev, t.id !== 'prehled' ? el('span', { class: 'n', text: ` (${pocty[t.id] || 0})` }) : null)));
+}
+
+// ── Filtry ────────────────────────────────────────────────
 function prosloFiltrem(b) {
-  const p = $('#fProjekt').value, r = $('#fPriorita').value;
+  const p = $('#fProjekt').value, r = $('#fPriorita').value, t = $('#fTyp').value;
   if (p && b.projekt !== p) return false;
+  if (t && (b.typ || 'bug') !== t) return false;
   if (r && String(b.priorita) !== r) return false;
   if ($('#fMoje').checked && b.resi !== ja && b.nahlasil !== ja) return false;
   const q = $('#hledat').value.trim().toLowerCase();
@@ -375,6 +481,13 @@ function prosloFiltrem(b) {
   return true;
 }
 
+function vykresli() {
+  vykresliTaby();
+  if (tab === 'prehled') vykresliKanban();
+  else vykresliTabulku(tab);
+}
+
+// ── Přehled (kanban) ──────────────────────────────────────
 function serad(stav) {
   const v = [...bugy.values()].filter(b => b.stav === stav);
   // Vyřešené: nejčerstvější nahoře; ostatní podle ručního pořadí.
@@ -382,9 +495,10 @@ function serad(stav) {
   return v.sort((a, b) => a.poradi - b.poradi || b.id - a.id);
 }
 
-function vykresli() {
+function vykresliKanban() {
   const main = $('main');
   const scroll = [...main.querySelectorAll('.karty')].map(k => k.scrollTop);
+  main.className = 'kanban';
   main.replaceChildren(...SLOUPCE.map(s => sloupec(s)));
   main.querySelectorAll('.karty').forEach((k, i) => { k.scrollTop = scroll[i] || 0; });
 }
@@ -414,8 +528,8 @@ function rychlePridani() {
     const nazev = inp.value.trim();
     if (!nazev) return;
     inp.value = '';
-    try { await zalozBug({ nazev }); } catch (e) { inp.value = nazev; chyba(e); }
-  } }, el('input', { placeholder: '+ Rychle zapsat bug a Enter', maxlength: 200 }));
+    try { await zalozBug({ nazev, typ: $('#fTyp').value || 'bug' }); } catch (e) { inp.value = nazev; chyba(e); }
+  } }, el('input', { placeholder: '+ Rychle zapsat a Enter', maxlength: 200 }));
 }
 
 function karta(b) {
@@ -427,7 +541,7 @@ function karta(b) {
     ondragstart: ev => { ev.dataTransfer.setData('text/plain', b.id); ev.currentTarget.classList.add('tahnu'); },
     ondragend: ev => ev.currentTarget.classList.remove('tahnu'),
   },
-    el('div', { class: 'nazev', text: b.nazev }),
+    el('div', { class: 'nazev', text: `${IKONA[b.typ] || IKONA.bug} ${b.nazev}` }),
     el('div', { class: 'meta' },
       b.projekt ? el('span', { class: 'tag', text: b.projekt }) : null,
       el('span', { text: '#' + b.id }),
@@ -480,6 +594,78 @@ function napojDrop(sloupecEl, karty, stav) {
   });
 }
 
+// ── Tabulka (taby se stavem) ──────────────────────────────
+const SLOUPCE_TABULKY = [
+  { klic: 'typ',      nazev: 'Typ',      hodnota: b => b.typ || 'bug' },
+  { klic: 'id',       nazev: '#',        hodnota: b => b.id },
+  { klic: 'nazev',    nazev: 'Název',    hodnota: b => b.nazev.toLowerCase() },
+  { klic: 'projekt',  nazev: 'Projekt',  hodnota: b => b.projekt.toLowerCase() },
+  { klic: 'priorita', nazev: 'Priorita', hodnota: b => b.priorita },
+  { klic: 'nahlasil', nazev: 'Nahlásil', hodnota: b => jmeno(b.nahlasil).toLowerCase() },
+  { klic: 'resi',     nazev: 'Řeší',     hodnota: b => b.resi ? jmeno(b.resi).toLowerCase() : '￿' },
+  { klic: 'created_at', nazev: 'Nahlášeno', hodnota: b => b.created_at },
+  { klic: 'vyreseno_at', nazev: 'Vyřešeno', hodnota: b => b.vyreseno_at || '', jen: 'vyreseno' },
+  { klic: 'obr',      nazev: 'Obrázky',  hodnota: b => b.screenshoty.length },
+];
+
+function vychoziRazeni(stav) {
+  return stav === 'vyreseno' ? { klic: 'vyreseno_at', smer: -1 } : { klic: 'priorita', smer: 1 };
+}
+
+function vykresliTabulku(stav) {
+  const main = $('main');
+  main.className = 'tabulka';
+  const r = razeni[stav] ||= vychoziRazeni(stav);
+  const sl = SLOUPCE_TABULKY.find(s => s.klic === r.klic);
+  const radky = [...bugy.values()].filter(b => b.stav === stav && prosloFiltrem(b)).sort((a, b) => {
+    const x = sl.hodnota(a), y = sl.hodnota(b);
+    // Při shodě: novější nahoře.
+    return (x < y ? -1 : x > y ? 1 : 0) * r.smer || b.created_at.localeCompare(a.created_at);
+  });
+
+  if (!radky.length) {
+    main.replaceChildren(el('div', { class: 'prazdno', text: 'Nic tu není (zkontroluj filtry nahoře).' }));
+    return;
+  }
+
+  const sloupce = SLOUPCE_TABULKY.filter(s => !s.jen || s.jen === stav);
+  const razeniKlik = klic => {
+    razeni[stav] = r.klic === klic ? { klic, smer: -r.smer } : { klic, smer: klic.endsWith('_at') ? -1 : 1 };
+    vykresli();
+  };
+  main.replaceChildren(el('table', {},
+    el('thead', {}, el('tr', {}, el('th', { class: 'pruh' }),
+      sloupce.map(s => el('th', { onclick: () => razeniKlik(s.klic) }, s.nazev,
+        r.klic === s.klic ? el('span', { class: 'smer', text: r.smer > 0 ? ' ▲' : ' ▼' }) : null)))),
+    el('tbody', {}, radky.map(b => radekTabulky(b, stav))),
+  ));
+  nactiNahledy(radky.flatMap(b => b.screenshoty));
+}
+
+function radekTabulky(b, stav) {
+  const bunky = {
+    typ: el('td', { class: 'typ', title: TYPY[b.typ || 'bug'], text: IKONA[b.typ] || IKONA.bug }),
+    id: el('td', { class: 'maly cislo', text: '#' + b.id }),
+    nazev: el('td', { class: 'hlavni' },
+      el('div', { class: 'nazev', text: `${window.innerWidth <= 800 ? (IKONA[b.typ] || IKONA.bug) + ' ' : ''}${b.nazev}` }),
+      b.popis ? el('div', { class: 'popis', text: b.popis }) : null,
+      stav !== 'nahlaseno' && b.reseni ? el('div', { class: 'reseni', text: '✓ ' + b.reseni }) : null),
+    projekt: el('td', { class: 'maly', 'data-label': 'Projekt' },
+      b.projekt ? el('span', { class: 'tag', text: b.projekt }) : '—'),
+    priorita: el('td', { class: 'maly', 'data-label': 'Priorita', text: PRIORITY[b.priorita] }),
+    nahlasil: el('td', { class: 'maly', 'data-label': 'Nahlásil', text: jmeno(b.nahlasil) }),
+    resi: el('td', { class: 'maly', 'data-label': 'Řeší', text: jmeno(b.resi) }),
+    created_at: el('td', { class: 'maly', 'data-label': 'Nahlášeno', text: datum(b.created_at) }),
+    vyreseno_at: el('td', { class: 'maly', 'data-label': 'Vyřešeno', text: datum(b.vyreseno_at) }),
+    obr: el('td', { class: 'obr' }, b.screenshoty.length ? el('div', { class: 'nahledy' },
+      b.screenshoty.map(c => el('img', { alt: '', 'data-cesta': c, loading: 'lazy', src: odkaz(c) || null,
+        onclick: ev => { ev.stopPropagation(); ukaz(odkaz(c)); } }))) : null),
+  };
+  return el('tr', { 'data-id': b.id, 'data-p': b.priorita, onclick: () => otevriDetail(b.id) },
+    el('td', { class: 'pruh' }),
+    SLOUPCE_TABULKY.filter(s => !s.jen || s.jen === stav).map(s => bunky[s.klic]));
+}
+
 // ── Zápis do databáze ─────────────────────────────────────
 function nahoru(stav) {
   const v = [...bugy.values()].filter(b => b.stav === stav).map(b => b.poradi);
@@ -491,6 +677,7 @@ async function zalozBug(pole) {
     priorita: 2, projekt: $('#fProjekt').value, ...pole, stav: 'nahlaseno', poradi: nahoru('nahlaseno'),
   }).select().single());
   bugy.set(r.id, r);
+  obnovProjekty();
   vykresli();
   return r;
 }
@@ -523,9 +710,32 @@ function presun(id, stav, poradi) {
   uloz(id, zmeny).catch(chyba);
 }
 
-// ── Detail ────────────────────────────────────────────────
+// ── Detail a nový bug ─────────────────────────────────────
 const dlg = $('#detail');
-dlg.addEventListener('close', () => { otevreny = null; });
+const formular = dlg.firstElementChild;
+dlg.addEventListener('close', () => {
+  // Zavřený nepřidaný koncept: jeho už nahrané obrázky by jinak zůstaly viset v úložišti.
+  // (Až sem, ne do zavri() — Chrome občas zavře okno na Esc i přes preventDefault.)
+  if (koncept?.screenshoty.length) sb.storage.from('screenshoty').remove(koncept.screenshoty);
+  otevreny = null;
+  koncept = null;
+});
+// Esc, klik vedle okna i „Zrušit" jdou přes zavri() — u rozepsaného nového se zeptá.
+dlg.addEventListener('cancel', ev => { ev.preventDefault(); zavri(); });
+dlg.addEventListener('click', ev => { if (ev.target === dlg) zavri(); });
+formular.addEventListener('submit', ev => { ev.preventDefault(); otevreny === 'novy' ? pridejKoncept() : dlg.close(); });
+formular.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); formular.requestSubmit(); }
+  // Enter v jednořádkovém poli nemá odeslat formulář (zavřít okno) — jen u nového ano, to je „Přidat".
+  else if (ev.key === 'Enter' && ev.target.tagName === 'INPUT' && otevreny !== 'novy') ev.preventDefault();
+});
+
+function zavri() {
+  if (otevreny === 'novy' && koncept) {
+    if (maObsah(koncept) && !confirm('Zahodit rozepsaný bug?')) return;
+  }
+  dlg.close();
+}
 
 function otevriDetail(id) {
   otevreny = id;
@@ -533,15 +743,80 @@ function otevriDetail(id) {
   dlg.showModal();
 }
 
+function otevriNovy(soubory = []) {
+  koncept = {
+    typ: $('#fTyp').value || 'bug', nazev: '', popis: '', projekt: $('#fProjekt').value || VYCHOZI_PROJEKT,
+    priorita: 2, screenshoty: [],
+  };
+  otevreny = 'novy';
+  vyplnNovy();
+  dlg.showModal();
+  formular.elements.nazev.focus();
+  if (soubory.length) nahraj(soubory);
+}
+
+async function pridejKoncept() {
+  const k = koncept;
+  if (!k.nazev.trim()) {
+    if (!k.popis.trim()) { formular.elements.nazev.focus(); return; }
+    k.nazev = k.popis.trim().split('\n')[0].slice(0, 120); // bez názvu → první řádek popisu
+  }
+  const tlacitko = $('.primary', formular);
+  tlacitko.disabled = true;
+  try {
+    const { screenshoty, ...pole } = k;
+    await zalozBug({ ...pole, nazev: k.nazev.trim(), screenshoty });
+    koncept = null;   // obrázky už patří bugu, zavření je nesmí smazat
+    dlg.close();
+  } catch (e) { tlacitko.disabled = false; chyba(e); }
+}
+
+function poleTypu(hodnota, onchange) {
+  return el('label', {}, 'Typ', el('select', { name: 'typ', onchange },
+    Object.entries(TYPY).map(([v, t]) => el('option', { value: v, text: t, selected: v === hodnota }))));
+}
+function polePriority(hodnota, onchange) {
+  return el('label', {}, 'Priorita', el('select', { name: 'priorita', onchange },
+    Object.entries(PRIORITY).map(([v, t]) => el('option', { value: v, text: t, selected: Number(v) === hodnota }))));
+}
+const poleObrazku = () => el('label', {}, 'Screenshoty — Ctrl+V, přetáhnout sem, nebo kliknout', el('div', { class: 'obrazky' }));
+
+function vyplnNovy() {
+  const k = koncept;
+  const nastav = pole => ev => { k[pole] = pole === 'priorita' ? Number(ev.target.value) : ev.target.value; };
+  formular.replaceChildren(
+    el('h3', { text: 'Nový záznam' }),
+    el('input', { class: 'nazev-in', name: 'nazev', placeholder: 'Co se děje? (název)', maxlength: 200, oninput: nastav('nazev') }),
+    el('div', { class: 'radek' },
+      poleTypu(k.typ, nastav('typ')),
+      polePriority(k.priorita, nastav('priorita')),
+      el('label', {}, 'Projekt', el('input', { name: 'projekt', list: 'projekty', value: k.projekt, oninput: nastav('projekt') })),
+    ),
+    el('label', {}, 'Popis (co se stalo, jak to zopakovat)',
+      el('textarea', { name: 'popis', oninput: nastav('popis') })),
+    poleObrazku(),
+    el('div', { class: 'paticka' },
+      el('span', { text: 'Ctrl+Enter = přidat' }),
+      el('span', {},
+        el('button', { type: 'button', class: 'btn', text: 'Zrušit', onclick: zavri }), ' ',
+        el('button', { class: 'btn primary', text: 'Přidat' })),
+    ),
+  );
+  formular.elements.typ.value = k.typ;
+  formular.elements.priorita.value = k.priorita;
+  vykresliObrazky(k.screenshoty);
+}
+
 function vyplnDetail(b, zvenku = false) {
-  const f = dlg.firstElementChild;
-  // Bratr upravil bug, který mám otevřený: přepsat jen pole, ve kterých zrovna nepíšu.
+  const f = formular;
+  // Ten druhý upravil bug, který mám otevřený: přepsat jen pole, ve kterých zrovna nepíšu.
   if (zvenku) {
-    for (const k of ['nazev', 'popis', 'reseni', 'projekt', 'priorita', 'stav', 'resi']) {
+    for (const k of ['typ', 'nazev', 'popis', 'reseni', 'projekt', 'priorita', 'stav', 'resi']) {
       const pole = f.elements[k];
       if (pole && pole !== document.activeElement) pole.value = b[k] ?? '';
     }
-    vykresliObrazky(b);
+    ukazReseni(b);
+    vykresliObrazky(b.screenshoty);
     $('.kdy', f).textContent = popisKdy(b);
     return;
   }
@@ -554,6 +829,7 @@ function vyplnDetail(b, zvenku = false) {
     let v = ev.target.value;
     if (pole === 'priorita') v = Number(v);
     if (pole === 'resi') v = v || null;
+    if (pole === 'stav') ukazReseni({ ...bugy.get(b.id), stav: v });
     clearTimeout(casovace[pole]);
     stavUlozeni.textContent = '';
     casovace[pole] = setTimeout(async () => {
@@ -576,18 +852,18 @@ function vyplnDetail(b, zvenku = false) {
   f.replaceChildren(
     el('input', { class: 'nazev-in', name: 'nazev', value: b.nazev, maxlength: 200, oninput: zmena('nazev') }),
     el('div', { class: 'radek' },
+      poleTypu(b.typ || 'bug', zmena('typ', true)),
       el('label', {}, 'Stav', el('select', { name: 'stav', onchange: zmena('stav', true) },
         SLOUPCE.map(s => el('option', { value: s.stav, text: s.nazev })))),
-      el('label', {}, 'Priorita', el('select', { name: 'priorita', onchange: zmena('priorita', true) },
-        Object.entries(PRIORITY).map(([v, t]) => el('option', { value: v, text: t })))),
+      polePriority(b.priorita, zmena('priorita', true)),
       el('label', {}, 'Projekt', el('input', { name: 'projekt', list: 'projekty', value: b.projekt, oninput: zmena('projekt') })),
       el('label', {}, 'Řeší', el('select', { name: 'resi', onchange: zmena('resi', true) }, lidiVolby)),
     ),
     el('label', {}, 'Popis (co se stalo, jak to zopakovat)',
       el('textarea', { name: 'popis', value: b.popis, oninput: zmena('popis') })),
-    el('label', {}, 'Řešení (jak se to opravilo, commit)',
+    el('label', { class: 'pole-reseni' }, 'Řešení (jak se to opravilo, commit)',
       el('textarea', { name: 'reseni', value: b.reseni, oninput: zmena('reseni'), style: 'min-height:60px' })),
-    el('label', {}, 'Screenshoty — vlož přes Ctrl+V, přetáhni sem, nebo klikni', el('div', { class: 'obrazky' })),
+    poleObrazku(),
     el('div', { class: 'paticka' },
       el('span', { class: 'kdy', text: popisKdy(b) }),
       stavUlozeni,
@@ -596,10 +872,18 @@ function vyplnDetail(b, zvenku = false) {
         el('button', { class: 'btn primary', text: 'Hotovo' })),
     ),
   );
+  f.elements.typ.value = b.typ || 'bug';
   f.elements.stav.value = b.stav;
   f.elements.priorita.value = b.priorita;
   f.elements.resi.value = b.resi || '';
-  vykresliObrazky(b);
+  ukazReseni(b);
+  vykresliObrazky(b.screenshoty);
+}
+
+// Řešení dává smysl až u rozdělaných a hotových; v Nahlášených jen když už tam něco je.
+function ukazReseni(b) {
+  const pole = $('.pole-reseni', formular);
+  if (pole) pole.hidden = b.stav === 'nahlaseno' && !(b.reseni || '').trim();
 }
 
 function popisKdy(b) {
@@ -609,8 +893,8 @@ function popisKdy(b) {
 }
 
 async function smaz(id) {
-  if (!confirm('Opravdu smazat tenhle bug? Nedá se to vrátit.')) return;
   const b = bugy.get(id);
+  if (maObsah(b) && !confirm('Opravdu smazat? Nedá se to vrátit.')) return;
   try {
     await dotaz(sb.from('bugs').delete().eq('id', id));
     if (b.screenshoty.length) await sb.storage.from('screenshoty').remove(b.screenshoty);
@@ -621,49 +905,80 @@ async function smaz(id) {
 }
 
 // ── Screenshoty ───────────────────────────────────────────
-const odkazy = new Map(); // cesta → podepsaná URL (platí hodinu)
+const odkazy = new Map(); // cesta → { url, kdy } (podepsaná URL platí hodinu)
+const odkaz = c => { const o = odkazy.get(c); return o && Date.now() - o.kdy < 50 * 60e3 ? o.url : null; };
 
-async function vykresliObrazky(b) {
+async function nactiOdkazy(cesty) {
+  const chybi = [...new Set(cesty)].filter(c => !odkaz(c));
+  if (!chybi.length) return;
+  const { data } = await sb.storage.from('screenshoty').createSignedUrls(chybi, 3600);
+  (data || []).forEach(d => d.signedUrl && odkazy.set(d.path, { url: d.signedUrl, kdy: Date.now() }));
+}
+
+async function nactiNahledy(cesty) {
+  await nactiOdkazy(cesty);
+  document.querySelectorAll('img[data-cesta]').forEach(img => {
+    const u = odkaz(img.dataset.cesta);
+    if (u && img.src !== u) img.src = u;
+  });
+}
+
+async function vykresliObrazky(cesty) {
   const box = $('.obrazky', dlg);
   if (!box) return;
-  const chybi = b.screenshoty.filter(c => !odkazy.has(c));
-  if (chybi.length) {
-    const { data } = await sb.storage.from('screenshoty').createSignedUrls(chybi, 3600);
-    (data || []).forEach(d => d.signedUrl && odkazy.set(d.path, d.signedUrl));
-  }
+  await nactiOdkazy(cesty);
   const vyber = el('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true,
-    onchange: ev => nahraj(b.id, [...ev.target.files]) });
+    onchange: ev => nahraj([...ev.target.files]) });
   box.replaceChildren(
-    ...b.screenshoty.map(c => el('div', { class: 'obrazek' },
-      el('img', { src: odkazy.get(c) || '', alt: '', onclick: () => ukaz(odkazy.get(c)) }),
-      el('button', { type: 'button', text: '✕', title: 'Odebrat', onclick: () => odeber(b.id, c) }))),
+    ...cesty.map(c => el('div', { class: 'obrazek' },
+      el('img', { src: odkaz(c) || '', alt: '', onclick: () => ukaz(odkaz(c)) }),
+      el('button', { type: 'button', text: '✕', title: 'Odebrat', onclick: () => odeber(c) }))),
     el('button', { type: 'button', class: 'vlozit', text: '+ obrázek', onclick: () => vyber.click() }),
     vyber,
   );
 }
 
-async function nahraj(id, soubory) {
+// Nahraje obrázky do toho, co je zrovna otevřené: existující bug, nebo rozepsaný nový.
+async function nahraj(soubory) {
   const obrazky = soubory.filter(s => s.type.startsWith('image/'));
-  if (!obrazky.length) return;
+  const cil = otevreny;
+  if (!obrazky.length || cil == null) return;
+  const box = $('.obrazky', dlg);
+  box?.append(el('span', { class: 'vlozit', text: 'Nahrávám…' }));
   try {
     const cesty = [];
     for (const s of obrazky) {
       const pripona = (s.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-      const cesta = `${id}/${crypto.randomUUID()}.${pripona}`;
+      const cesta = `${cil === 'novy' ? 'novy' : cil}/${crypto.randomUUID()}.${pripona}`;
       await dotaz(sb.storage.from('screenshoty').upload(cesta, s, { contentType: s.type }));
       cesty.push(cesta);
     }
-    const r = await uloz(id, { screenshoty: [...bugy.get(id).screenshoty, ...cesty] });
-    vykresliObrazky(r);
-  } catch (e) { chyba(e); }
+    if (cil === 'novy') {
+      if (!koncept) { sb.storage.from('screenshoty').remove(cesty); return; } // mezitím zavřeno
+      koncept.screenshoty.push(...cesty);
+      vykresliObrazky(koncept.screenshoty);
+    } else {
+      const r = await uloz(cil, { screenshoty: [...bugy.get(cil).screenshoty, ...cesty] });
+      if (otevreny === cil) vykresliObrazky(r.screenshoty);
+    }
+  } catch (e) {
+    chyba(e);
+    if (otevreny === cil) vykresliObrazky(cil === 'novy' ? koncept?.screenshoty || [] : bugy.get(cil).screenshoty);
+  }
 }
 
-async function odeber(id, cesta) {
+async function odeber(cesta) {
+  const cil = otevreny;
   if (!confirm('Odebrat obrázek?')) return;
   try {
-    const r = await uloz(id, { screenshoty: bugy.get(id).screenshoty.filter(c => c !== cesta) });
+    if (cil === 'novy') {
+      koncept.screenshoty = koncept.screenshoty.filter(c => c !== cesta);
+      vykresliObrazky(koncept.screenshoty);
+    } else {
+      const r = await uloz(cil, { screenshoty: bugy.get(cil).screenshoty.filter(c => c !== cesta) });
+      vykresliObrazky(r.screenshoty);
+    }
     await sb.storage.from('screenshoty').remove([cesta]);
-    vykresliObrazky(r);
   } catch (e) { chyba(e); }
 }
 
@@ -674,41 +989,35 @@ function ukaz(url) {
 }
 $('#nahled').addEventListener('click', () => $('#nahled').close());
 
-dlg.addEventListener('paste', ev => {
-  const soubory = [...ev.clipboardData.files];
-  if (soubory.length && otevreny) { ev.preventDefault(); nahraj(otevreny, soubory); }
+// Obrázky ze schránky: Win+Shift+S je dá do `files`, „Kopírovat obrázek"
+// z prohlížeče někdy jen do `items` — bereme obojí.
+function obrazkyZeSchranky(data) {
+  const z = [...(data?.items || [])]
+    .filter(i => i.kind === 'file' && i.type.startsWith('image/'))
+    .map(i => i.getAsFile()).filter(Boolean);
+  return z.length ? z : [...(data?.files || [])].filter(s => s.type.startsWith('image/'));
+}
+
+// Jeden handler pro celou stránku: když je otevřený bug (nebo nový), obrázek
+// jde do něj — ať je fokus kdekoli. Jinak se založí nový záznam s obrázkem.
+document.addEventListener('paste', ev => {
+  if ($('#app').hidden || $('#nahled').open) return;
+  const soubory = obrazkyZeSchranky(ev.clipboardData);
+  if (!soubory.length) return;
+  ev.preventDefault();
+  if (dlg.open) nahraj(soubory);
+  else otevriNovy(soubory);
 });
 dlg.addEventListener('dragover', ev => ev.preventDefault());
 dlg.addEventListener('drop', ev => {
-  if (!ev.dataTransfer.files.length || !otevreny) return;
+  if (!ev.dataTransfer.files.length || otevreny == null) return;
   ev.preventDefault();
-  nahraj(otevreny, [...ev.dataTransfer.files]);
-});
-dlg.addEventListener('click', ev => { if (ev.target === dlg) dlg.close(); }); // klik vedle = zavřít
-
-// Ctrl+V se screenshotem kdekoli na nástěnce = nový bug s obrázkem.
-document.addEventListener('paste', async ev => {
-  if (dlg.open || $('#app').hidden || ev.target.closest?.('input, textarea')) return;
-  const soubory = [...ev.clipboardData.files].filter(s => s.type.startsWith('image/'));
-  if (!soubory.length) return;
-  ev.preventDefault();
-  try {
-    const b = await zalozBug({ nazev: 'Nový bug (ze screenshotu)' });
-    otevriDetail(b.id);
-    await nahraj(b.id, soubory);
-    dlg.firstElementChild.elements.nazev.select();
-  } catch (e) { chyba(e); }
+  nahraj([...ev.dataTransfer.files]);
 });
 
 // ── Lišta ─────────────────────────────────────────────────
-$('#novy').addEventListener('click', async () => {
-  try {
-    const b = await zalozBug({ nazev: 'Nový bug' });
-    otevriDetail(b.id);
-    dlg.firstElementChild.elements.nazev.select();
-  } catch (e) { chyba(e); }
-});
-for (const id of ['#fProjekt', '#fPriorita', '#fMoje'])
+$('#novy').addEventListener('click', () => otevriNovy());
+for (const id of ['#fProjekt', '#fTyp', '#fPriorita', '#fMoje'])
   $(id).addEventListener('change', () => { ulozFiltry(); vykresli(); });
 $('#hledat').addEventListener('input', vykresli);
 
@@ -726,7 +1035,7 @@ $('#mojeJmeno').addEventListener('click', async () => {
 document.addEventListener('keydown', ev => {
   if (dlg.open || ev.target.closest('input, textarea, select') || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   if (ev.key === '/') { ev.preventDefault(); $('#hledat').focus(); }
-  if (ev.key === 'n') { ev.preventDefault(); $('.rychly input')?.focus(); }
+  if (ev.key === 'n') { ev.preventDefault(); otevriNovy(); }
 });
 </script>
 </body>
