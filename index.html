@@ -14,6 +14,7 @@
   --p1: #ff6b6b; --p2: #ffb340; --p3: #8b929c;
   --ok: #5ee38a; --flash: #5b4a12; --odznak: #e5484d;
   --shadow: 0 1px 2px rgb(0 0 0 / .6);
+  --okraj-pole: #fff;  /* pole, kam se píše — ať je hned vidět kam */
 }
 ::placeholder { color: var(--muted); opacity: 1; }
 * { box-sizing: border-box; }
@@ -36,7 +37,7 @@ button { cursor: pointer; }
 #login .chyba { color: var(--p1); font-size: 13px; min-height: 1em; }
 
 input, select, textarea {
-  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--okraj-pole); border-radius: 8px;
   padding: 8px 10px; width: 100%;
 }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
@@ -159,10 +160,11 @@ td.pruh { background: var(--p3); }
 tr[data-p="1"] td.pruh { background: var(--p1); }
 tr[data-p="2"] td.pruh { background: var(--p2); }
 td .nazev { font-weight: 600; word-break: break-word; }
-td .popis, td .reseni {
+td .popis, td .navrh, td .reseni {
   color: var(--muted); font-size: 13px; margin-top: 2px; white-space: pre-line;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
+td .navrh { color: var(--p2); }
 td .reseni { color: var(--ok); }
 td.maly { white-space: nowrap; color: var(--muted); font-size: 13px; }
 .nahledy { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -190,17 +192,21 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
 .detail .id-radek { font-size: 13px; color: var(--muted); font-weight: 600; }
 .detail .pole { display: grid; gap: 7px; }
 .detail .popisek { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
-.detail textarea, .detail input:not([type=radio]) { background: var(--bg); border: 1px solid var(--line); }
+.detail textarea, .detail input:not([type=radio]) { background: var(--bg); border: 1px solid var(--okraj-pole); }
 .detail .nazev-in {
   font-size: 22px; font-weight: 650; line-height: 1.3; resize: none; overflow: hidden;
   padding: 8px 10px; border-color: transparent; background: none;
 }
-.detail .nazev-in:hover { border-color: var(--line); }
+.detail .nazev-in:hover { border-color: var(--okraj-pole); }
 .detail .nazev-in:focus { background: var(--bg); }
-.detail .popis-in, .detail .reseni-in {
+/* Nový záznam: okno i název s bílým okrajem, ať je hned vidět, kam psát. */
+#detail.novy { outline: 2px solid var(--okraj-pole); outline-offset: -2px; }
+#detail.novy .nazev-in { border-color: var(--okraj-pole); background: var(--bg); }
+.detail .popis-in, .detail .navrh-in, .detail .reseni-in {
   font-size: 15px; line-height: 1.7; padding: 12px 14px; border-radius: 10px; resize: none; overflow: hidden;
 }
 .detail .popis-in { min-height: 300px; }
+.detail .navrh-in { min-height: 120px; }
 .detail .reseni-in { min-height: 90px; }
 .detail .info { font-size: 13px; color: var(--muted); display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 14px; }
 .detail .info b { color: var(--text); font-weight: 600; }
@@ -232,8 +238,8 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
   .detail .levy, .detail .bok { display: contents; }
   .detail .levy > *, .detail .bok > * { flex-shrink: 0; }  /* jinak flexbox smrskne název */
   .detail .m-hl { order: 1; } .detail .m-nazev { order: 2; } .detail .m-ovl { order: 3; }
-  .detail .m-popis { order: 4; } .detail .m-res { order: 5; } .detail .m-obr { order: 6; }
-  .detail .m-info { order: 7; } .detail .m-akce { order: 8; }
+  .detail .m-popis { order: 4; } .detail .m-navrh { order: 5; } .detail .m-res { order: 6; }
+  .detail .m-obr { order: 7; } .detail .m-info { order: 8; } .detail .m-akce { order: 9; }
   .detail .nazev-in { font-size: 19px; padding: 6px 8px; }
   .detail .popis-in { min-height: 200px; }
 }
@@ -575,7 +581,7 @@ async function dotaz(p) {
 // Je na bugu něco, o co by byla škoda přijít? Jen pak se ptáme před smazáním.
 function maObsah(b) {
   const nazev = (b.nazev || '').trim();
-  return b.screenshoty?.length > 0 || !!(b.popis || '').trim() || (!!nazev && nazev !== VYCHOZI_NAZEV);
+  return b.screenshoty?.length > 0 || !!(b.popis || '').trim() || !!(b.navrh || '').trim() || (!!nazev && nazev !== VYCHOZI_NAZEV);
 }
 
 const VYCHOZI_TYP = '';  // Přehled ukazuje bugy i úkoly
@@ -786,7 +792,7 @@ function prosloFiltrem(b, t = typFiltru()) {
   if (n && b.nahlasil !== n) return false;
   const q = $('#hledat').value.trim().toLowerCase();
   if (q) {
-    const text = [b.nazev, b.popis, b.reseni, b.projekt, NAZEV_VRSTVY[b.vrstva], '#' + b.id].join(' ').toLowerCase();
+    const text = [b.nazev, b.popis, b.navrh, b.reseni, b.projekt, NAZEV_VRSTVY[b.vrstva], '#' + b.id].join(' ').toLowerCase();
     if (!q.split(/\s+/).every(s => text.includes(s))) return false;
   }
   return true;
@@ -962,6 +968,7 @@ function radekTabulky(b, stav) {
     nazev: el('td', { class: 'hlavni' },
       el('div', { class: 'nazev', text: `${window.innerWidth <= 800 ? (IKONA[b.typ] || IKONA.bug) + ' ' : ''}${b.nazev}` }),
       b.popis ? el('div', { class: 'popis', text: b.popis }) : null,
+      b.navrh ? el('div', { class: 'navrh', text: '💡 ' + b.navrh }) : null,
       stav !== 'nahlaseno' && b.reseni ? el('div', { class: 'reseni', text: '✓ ' + b.reseni }) : null),
     projekt: el('td', { class: 'maly', 'data-label': 'Projekt' },
       b.projekt ? el('span', { class: 'tag', text: b.projekt }) : '—',
@@ -1033,6 +1040,7 @@ dlg.addEventListener('close', () => {
   if (koncept?.screenshoty.length) sb.storage.from('screenshoty').remove(koncept.screenshoty);
   otevreny = null;
   koncept = null;
+  dlg.classList.remove('novy');
 });
 // Esc, klik vedle okna i „Zrušit" jdou přes zavri() — u rozepsaného nového se zeptá.
 dlg.addEventListener('cancel', ev => { ev.preventDefault(); zavri(); });
@@ -1067,10 +1075,11 @@ function otevriDetail(id) {
 
 function otevriNovy(soubory = []) {
   koncept = {
-    typ: typFiltru() || 'bug', nazev: '', popis: '', projekt: $('#fProjekt').value || VYCHOZI_PROJEKT,
+    typ: typFiltru() || 'bug', nazev: '', popis: '', navrh: '', projekt: $('#fProjekt').value || VYCHOZI_PROJEKT,
     priorita: 2, screenshoty: [],
   };
   otevreny = 'novy';
+  dlg.classList.add('novy');
   vyplnNovy();
   dlg.showModal();
   vyskaVsech();
@@ -1134,6 +1143,9 @@ const poleNazvu = (hodnota, on, placeholder) => el('textarea', {
 const polePopisu = (hodnota, on) => el('label', { class: 'pole m-popis' },
   el('span', { class: 'popisek', text: 'Popis — co se stalo, jak to zopakovat' }),
   el('textarea', { class: 'popis-in', name: 'popis', value: hodnota, oninput: on }));
+const poleNavrhu = (hodnota, on) => el('label', { class: 'pole m-navrh' },
+  el('span', { class: 'popisek', text: 'Návrh řešení / tip — jak by to šlo opravit, specifikace' }),
+  el('textarea', { class: 'navrh-in', name: 'navrh', value: hodnota, oninput: on }));
 const poleObrazku = () => el('div', { class: 'pole m-obr' },
   el('span', { class: 'popisek', text: 'Screenshoty — Ctrl+V, přetáhnout sem, nebo kliknout' }),
   el('div', { class: 'obrazky' }));
@@ -1149,6 +1161,7 @@ function vyplnNovy() {
       el('div', { class: 'id-radek m-hl', text: 'Nový záznam' }),
       poleNazvu('', nastav('nazev'), 'Co se děje? (název)'),
       polePopisu('', nastav('popis')),
+      poleNavrhu('', nastav('navrh')),
       poleObrazku()),
     el('aside', { class: 'bok' },
       prepinacTypu(k.typ, nastav('typ')),
@@ -1167,7 +1180,7 @@ function vyplnDetail(b, zvenku = false) {
   const f = formular;
   // Ten druhý upravil bug, který mám otevřený: přepsat jen pole, ve kterých zrovna nepíšu.
   if (zvenku) {
-    for (const k of ['typ', 'nazev', 'popis', 'reseni', 'projekt', 'vrstva', 'priorita', 'stav', 'resi']) {
+    for (const k of ['typ', 'nazev', 'popis', 'navrh', 'reseni', 'projekt', 'vrstva', 'priorita', 'stav', 'resi']) {
       const p = f.elements[k];
       if (p && p !== document.activeElement) p.value = b[k] ?? '';
     }
@@ -1216,6 +1229,7 @@ function vyplnDetail(b, zvenku = false) {
       el('div', { class: 'id-radek m-hl', text: idRadek(b) }),
       poleNazvu(b.nazev, zmena('nazev')),
       polePopisu(b.popis, zmena('popis')),
+      poleNavrhu(b.navrh, zmena('navrh')),
       el('label', { class: 'pole pole-reseni m-res' },
         el('span', { class: 'popisek', text: 'Řešení — jak se to opravilo, commit' }),
         el('textarea', { class: 'reseni-in', name: 'reseni', value: b.reseni, oninput: zmena('reseni') })),
