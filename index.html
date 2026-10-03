@@ -12,7 +12,7 @@
   --bg: #000; --panel: #111317; --card: #1a1d23; --text: #fff; --muted: #b4bac4;
   --line: #3a3f48; --accent: #7aa7ff; --accent-soft: #1c2c4d; --btn: #2f6fed;
   --p1: #ff6b6b; --p2: #ffb340; --p3: #8b929c;
-  --ok: #5ee38a; --flash: #5b4a12; --odznak: #e5484d;
+  --ok: #5ee38a; --flash: #5b4a12; --odznak: #e5484d; --okraj-okna: #5a616d;
   --shadow: 0 1px 2px rgb(0 0 0 / .6);
   --okraj-pole: #fff;  /* pole, kam se píše — ať je hned vidět kam */
 }
@@ -174,11 +174,14 @@ td.maly { white-space: nowrap; color: var(--muted); font-size: 13px; }
 }
 
 /* ── Detail bugu ────────────────────────────────────────── */
+/* Okna mají viditelný obrys — na černém pozadí by jinak splývala s tím, co je pod nimi. */
 dialog {
-  border: none; border-radius: 12px; padding: 0; width: min(640px, calc(100% - 32px));
-  background: var(--card); color: var(--text); box-shadow: 0 10px 40px rgb(0 0 0 / .3);
+  border: 1px solid var(--okraj-okna); border-radius: 12px; padding: 0; width: min(640px, calc(100% - 32px));
+  background: var(--card); color: var(--text);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 16px 48px rgb(0 0 0 / .7);
 }
-dialog::backdrop { background: rgb(0 0 0 / .45); }
+dialog::backdrop { background: rgb(0 0 0 / .6); }
+#nahled { border: none; }
 #detail { width: min(1040px, calc(100% - 32px)); max-height: calc(100vh - 32px); overflow: hidden; }
 /* Varianta B: obsah vlevo (název a popis stejně široké), nastavení v panelu vpravo. */
 .detail {
